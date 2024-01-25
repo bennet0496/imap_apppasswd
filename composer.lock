@@ -1,0 +1,77 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "c647974905e1d02d5dfd2bd70feb339c",
+    "packages": [
+        {
+            "name": "roundcube/plugin-installer",
+            "version": "0.3.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/roundcube/plugin-installer.git",
+                "reference": "c4335e20b86cfe3a184ccf24d675c6a0338a372a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/roundcube/plugin-installer/zipball/c4335e20b86cfe3a184ccf24d675c6a0338a372a",
+                "reference": "c4335e20b86cfe3a184ccf24d675c6a0338a372a",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^1.0 || ^2.0"
+            },
+            "require-dev": {
+                "composer/composer": "*"
+            },
+            "type": "composer-plugin",
+            "extra": {
+                "class": [
+                    "Roundcube\\Composer\\RoundcubeInstaller"
+                ]
+            },
+            "autoload": {
+                "psr-0": {
+                    "Roundcube\\Composer": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0+"
+            ],
+            "authors": [
+                {
+                    "name": "Thomas Bruederli",
+                    "email": "thomas@roundcube.net"
+                },
+                {
+                    "name": "Till Klampaeckel",
+                    "email": "till@php.net"
+                },
+                {
+                    "name": "Philip Weir",
+                    "email": "roundcube@tehinterweb.co.uk"
+                }
+            ],
+            "description": "A composer-installer for Roundcube plugins and skins.",
+            "support": {
+                "issues": "https://github.com/roundcube/plugin-installer/issues",
+                "source": "https://github.com/roundcube/plugin-installer/tree/0.3.2"
+            },
+            "time": "2022-06-24T09:08:18+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=8.1"
+    },
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
+}

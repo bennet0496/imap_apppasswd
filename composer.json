@@ -1,0 +1,35 @@
+{
+  "name": "bennet0496/imap_apppasswd",
+  "license": "MIT",
+  "description": "Create App-Passwords for IMAP and SMTP",
+  "type": "roundcube-plugin",
+  "authors": [
+    {
+      "name": "Bennet Becker",
+      "email": "dev@bennet.cc"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://plugins.roundcube.net"
+    }
+  ],
+  "require": {
+    "php": ">=8.2",
+    "roundcube/plugin-installer": "^0.3",
+    "ext-openssl": "*",
+    "ext-mysqli": "*",
+    "ext-pdo": "*"
+  },
+  "extra": {
+    "roundcube": {
+      "min-version": "1.6.1"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "roundcube/plugin-installer": true
+    }
+  }
+}
