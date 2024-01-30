@@ -79,7 +79,7 @@ class imap_apppasswd extends \rcube_plugin
         $this->include_stylesheet("imap_apppasswd.css");
         $this->include_script("imap_apppasswd.js");
 
-        $s = $this->db->prepare("SELECT pws.*, pwid, src_ip, src_rdns, src_loc, src_isp, timestamp as last_used
+        $s = $this->db->prepare("SELECT DISTINCT pws.*, pwid, src_ip, src_rdns, src_loc, src_isp, timestamp as last_used
             FROM (SELECT * FROM app_passwords WHERE uid = :uid) pws
             LEFT JOIN (WITH s1 AS (
                 SELECT *, RANK() OVER (PARTITION BY log.pwid ORDER BY log.timestamp DESC) AS `Rank` FROM log
@@ -95,19 +95,31 @@ class imap_apppasswd extends \rcube_plugin
         $table->add_header([], "");
         $table->add_header([], $this->gettext("imap_setting"));
         $table->add_header([], $this->gettext("smtp_setting"));
-        $table->add_row();
 
+        $table->add_row(['class' => 'small_row']);
+        $table->add([], "");
+        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("server"));
+        $table->add_row();
         $table->add([], $this->gettext("server"));
         $table->add([], $this->rc->config->get("advertised_client_imap_host"));
         $table->add([], $this->rc->config->get("advertised_client_smtp_host"));
+        $table->add_row(['class' => 'small_row']);
+        $table->add([], "");
+        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("port"));
         $table->add_row();
         $table->add([], $this->gettext("port"));
         $table->add([], $this->rc->config->get("advertised_client_imap_port"));
         $table->add([], $this->rc->config->get("advertised_client_smtp_port"));
+        $table->add_row(['class' => 'small_row']);
+        $table->add([], "");
+        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("protocol"));
         $table->add_row();
         $table->add([], $this->gettext("protocol"));
         $table->add([], $this->rc->config->get("advertised_client_imap_protocol"));
         $table->add([], $this->rc->config->get("advertised_client_smtp_protocol"));
+        $table->add_row(['class' => 'small_row']);
+        $table->add([], "");
+        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("password_method"));
         $table->add_row();
         $table->add([], $this->gettext("password_method"));
         $table->add([], $this->rc->config->get("advertised_client_imap_password_method"));

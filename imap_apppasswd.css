@@ -154,11 +154,14 @@
 }
 
 .apppw_info {
-    margin: calc(58px + 3rem) 1rem 3rem 1rem;
+    margin: calc(58px + 3rem) 1rem 1rem 1rem;
     display: flex;
     place-content: center;
     place-items: center;
     flex-direction: column;
+    width: calc(100% - 2rem) !important;
+    overflow-x: clip !important;
+    text-align: justify;
 }
 .apppw_info p {
     width: 100%;
@@ -166,5 +169,50 @@
 }
 
 .apppw_info table {
-    width: fit-content;
+    width: 100% !important;
+    white-space: normal !important;
+    /*table-layout: fixed !important;*/
+}
+
+.apppw_info table .small_label,.small_row {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .apppw_info .table tr > :first-child {
+        display: none;
+        /*width: 0% !important;*/
+    }
+    .apppw_info table .small_row {
+        display: block;
+    }
+    .apppw_info table .small_label {
+        display: block;
+        /*column-span: 2;*/
+        width: 200%;
+        text-align: center !important;
+        font-size: small;
+        font-variant: small-caps;
+        font-weight: 600;
+        padding: 0;
+    }
+
+    .apppw_info .table tr {
+        /*display: flex;*/
+        white-space: normal !important
+    }
+
+    .apppw_info .table tr td,th {
+        /*flex: 1;*/
+        text-overflow: clip;
+        overflow: hidden;
+        /*width: 50%;*/
+        white-space: normal !important;
+        text-align: start;
+    }
+    .apppw_info table {
+        /*max-width: calc(100% - 2rem) !important;*/
+        /*width: 10px !important;*/
+        place-self: start;
+    }
 }
