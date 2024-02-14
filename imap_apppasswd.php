@@ -79,6 +79,8 @@ class imap_apppasswd extends \rcube_plugin
         $this->include_stylesheet("imap_apppasswd.css");
         $this->include_script("imap_apppasswd.js");
 
+//        $this->rc->db
+
         $s = $this->db->prepare("SELECT DISTINCT pws.*, pwid, src_ip, src_rdns, src_loc, src_isp, timestamp as last_used
             FROM (SELECT * FROM app_passwords WHERE uid = :uid) pws
             LEFT JOIN (WITH s1 AS (
