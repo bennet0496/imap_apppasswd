@@ -1,5 +1,5 @@
 <?php
-$labels['imap_apppasswd'] = "App Passwords";
+$labels['imap_apppasswd'] = "App Passwords (beta)";
 
 $labels['last_used'] = "Last used";
 $labels['never_used'] = "Never used";

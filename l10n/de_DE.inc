@@ -1,5 +1,5 @@
 <?php
-$labels['imap_apppasswd'] = "Anwendungsspezifische Kennwörter";
+$labels['imap_apppasswd'] = "Anwendungsspezifische Kennwörter (beta)";
 
 $labels['last_used'] = "Zuletzt benutzt";
 $labels['never_used'] = "noch nie verwendet";
