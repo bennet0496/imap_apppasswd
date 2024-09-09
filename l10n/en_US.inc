@@ -15,6 +15,8 @@ $labels['edit'] = "Edit";
 $labels['done'] = 'Done';
 $labels['ok'] = 'OK';
 
+$labels['no_passwords'] = 'There are no App passwords created yet. You can create one below by clicking the Add button.';
+
 $labels['apppw_deleted_success'] = 'App Password successfully deleted';
 $labels['apppw_deleted_error'] = 'Error deleting App Password, please try again later';
 $labels['apppw_add_error'] = 'Error adding password, please try again later';
@@ -34,7 +36,7 @@ If you want to add an additional client, just create a new password; you can cre
 EOT;
 
 $labels['use_the_following_settings'] = "Use the following settings for your client";
-$labels['server'] = "Serveur";
+$labels['server'] = "Server";
 $labels['port'] = "Port";
 $labels['protocol'] = "Connection Security";
 $labels['password_method'] = "Authentication Method";

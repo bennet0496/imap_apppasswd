@@ -1,0 +1,6 @@
+driver = mysql
+connect = host=127.0.0.1 dbname=mail user=mailserver password=password
+
+password_query = SELECT uid AS username, password, id AS userdb_passid \
+  FROM app_passwords \
+  WHERE uid = '%n' AND REGEXP_SUBSTR(password, '[$].*') = ENCRYPT('%w', REGEXP_SUBSTR(password, '[$].*[$]'))

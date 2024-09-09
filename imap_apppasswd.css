@@ -5,10 +5,15 @@
     /*border: black 1px solid;*/
     /*border-radius: 10px;*/
     align-self: center;
-    margin: .7rem 0;
+    margin: .7rem auto;
     padding: .7rem 1rem;
     /*max-height: calc(100vh - 1.4rem);*/
     z-index: 0;
+}
+
+.apppw_container_flexroot {
+    display: flex;
+    width: 100%;
 }
 
 #layout {
@@ -117,6 +122,10 @@
     margin-left: auto;
 }
 
+.apppw_info .table td {
+    padding: 0.75rem 1rem;
+}
+
 .dark-mode{
     #layout-content .header {
         background-color: inherit !important;
@@ -169,7 +178,7 @@
 }
 
 .apppw_info table {
-    width: 100% !important;
+    width: auto !important;
     white-space: normal !important;
     /*table-layout: fixed !important;*/
 }
@@ -178,6 +187,24 @@
     display: none;
 }
 
+.no_passwords {
+    font-style: italic;
+    display: block;
+    text-align: center;
+    padding: 1em;
+}
+
+.no_passwords .hidden {
+    display: none !important;
+}
+
+.apppw-footer {
+    font-weight: lighter !important;
+    font-style: italic;
+    font-size: small !important;
+    margin: 0 auto;
+
+}
 @media (max-width: 600px) {
     .apppw_info .table tr > :first-child {
         display: none;
@@ -214,5 +241,8 @@
         /*max-width: calc(100% - 2rem) !important;*/
         /*width: 10px !important;*/
         place-self: start;
+    }
+    .apppw {
+        min-width: 100%;
     }
 }

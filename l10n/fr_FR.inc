@@ -15,6 +15,8 @@ $labels['edit'] = "Editer";
 $labels['done'] = "Finition";
 $labels['ok'] = "D'accord";
 
+$labels['no_passwords'] = "Aucun mot de passe d'application n'a encore été créé. Vous pouvez en créer un ci-dessous en cliquant sur le bouton Ajouter.";
+
 $labels['apppw_deleted_success'] = "Mot de passe de l'application supprimé avec succès";
 $labels['apppw_deleted_error'] = "Erreur de suppression du mot de passe de l'application, veuillez réessayer plus tard";
 $labels['apppw_add_error'] = "Erreur lors de l'ajout du mot de passe, veuillez réessayer plus tard";

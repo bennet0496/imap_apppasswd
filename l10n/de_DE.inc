@@ -15,6 +15,8 @@ $labels['edit'] = "Bearbeiten";
 $labels['done'] = 'Fertig';
 $labels['ok'] = 'OK';
 
+$labels['no_passwords'] = 'Es wurden noch keine Anwendungsspezifischen Kennworte erstellt. Du kannst durch klicken des Hinzufügen Knopfes eines erstellen.';
+
 $labels['apppw_deleted_success'] = 'Anwendungsspezifisches Kennwort erfolgreich gelöscht';
 $labels['apppw_deleted_error'] = 'Fehler beim löschen des Anwendungsspezifischen Kennwortes, bitte versuche es später erneut';
 $labels['apppw_add_error'] = 'Fehler beim hinzufügen eines Anwendungsspezifischen Kennwortes, bitte versuche es später erneut';

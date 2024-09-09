@@ -23,12 +23,25 @@
 //
 //class_alias('\bennetcc\imap_apppasswd', '\imap_apppasswd');
 
+require "util.php";
+require "log.php";
+
+const IMAP_APPPW_PREFIX = "imap_apppasswd";
+const IMAP_APPPW_LOG_FILE = "imap_apppw";
+const IMAP_APPPW_VERSION = "git-main";
+
+function __(string $val): string
+{
+    return IMAP_APPPW_PREFIX . "_" . $val;
+}
+
 class imap_apppasswd extends \rcube_plugin
 {
     public $task = 'settings';
-    private string $log_table = 'userlogins';
     private \rcmail $rc;
     private \PDO $db;
+
+    private \bennetcc\Log $log;
 
     function init(): void
     {
@@ -37,15 +50,26 @@ class imap_apppasswd extends \rcube_plugin
         $this->add_texts('l10n/', true);
         $this->rc = \rcmail::get_instance();
 
+        $this->log = new \bennetcc\Log(IMAP_APPPW_LOG_FILE, IMAP_APPPW_PREFIX, $this->rc->config->get(__('log_level'), \bennetcc\LogLevel::WARNING));
+
         if ($this->rc->task == 'settings') {
+            $dsn = $this->rc->config->get(__('db_dsn'));
+            $dbu = $this->rc->config->get(__('db_username'));
+            $dbpw = $this->rc->config->get(__('db_password'));
+
+            if ($dsn) {
+                $this->db = new PDO($dsn, $dbu, $dbpw);
+            } else {
+                $this->log->error("database not selected");
+                return;
+            }
+
             $this->add_hook('settings_actions', [$this, 'settings_actions']);
             $this->register_action('plugin.imap_apppasswd', [$this, 'show_settings']);
             $this->register_action('plugin.imap_apppasswd_remove', [$this, 'remove_password']);
             $this->register_action('plugin.imap_apppasswd_delete_all', [$this, 'delete_all']);
             $this->register_action('plugin.imap_apppasswd_add', [$this, 'add_password']);
             $this->register_action('plugin.imap_apppasswd_rename', [$this, 'rename_password']);
-
-            $this->db = new PDO("mysql:host=db.example.com;dbname=mail", "roundcube", "Eemeep2cheil4dee5ahShohquo5EC6ko"); //\mysqli("db.example.com", "roundcube", "Eemeep2cheil4dee5ahShohquo5EC6ko", "mail");
         }
     }
 
@@ -66,111 +90,101 @@ class imap_apppasswd extends \rcube_plugin
 
     public function show_settings(): void
     {
-        $this->register_handler('plugin.body', [$this, 'settingshtml']);
-        $this->rc->output->set_pagetitle($this->gettext('imap_apppasswd'));
-        $this->rc->output->send('plugin');
-    }
+//        $this->register_handler('plugin.body', [$this, 'settingshtml']);
+        $this->register_handler('imap_apppasswd.apppw_list', [$this, 'apppw_listhtml']);
 
-    /**
-     * Settings tab content.
-     */
-    public function settingshtml(): string
-    {
+        $this->rc->output->set_pagetitle($this->gettext('imap_apppasswd'));
+//        $this->rc->output->send('plugin');
         $this->include_stylesheet("imap_apppasswd.css");
         $this->include_script("imap_apppasswd.js");
 
-//        $this->rc->db
+        $this->rc->output->send('imap_apppasswd.apppasswords');
+    }
 
-        $s = $this->db->prepare("SELECT DISTINCT pws.*, pwid, src_ip, src_rdns, src_loc, src_isp, timestamp as last_used
-            FROM (SELECT * FROM app_passwords WHERE uid = :uid) pws
-            LEFT JOIN (WITH s1 AS (
-                SELECT *, RANK() OVER (PARTITION BY log.pwid ORDER BY log.timestamp DESC) AS `Rank` FROM log
-            ) SELECT * FROM s1 WHERE `Rank` = 1 ORDER BY timestamp) l ON l.pwid = pws.id ORDER BY created;");
-        $user_name = explode("@",$this->rc->get_user_name())[0];
-//        \rcmail::write_log('imap_apppw', "username ".$this->rc->get_user_name()." ".$this->rc->get_user_id());
+    /**
+     * Helper to resolve Roundcube username (email) to Nextcloud username
+     *
+     * Returns resolved name.
+     *
+     * @param $user string The username
+     * @return string
+     */
+    private function resolve_username(string $user = ""): string
+    {
+        $this->log->trace("user: ".$user);
+
+        if (empty($user)) {
+            // verbatim roundcube username
+            $user = $this->rc->user->get_username();
+        }
+
+        $this->log->trace("user: ".$user);
+
+        $username_tmpl = $this->rc->config->get(__("imap_username"));
+
+        $mail = $this->rc->user->get_username("mail");
+        $mail_local = $this->rc->user->get_username("local");
+        $mail_domain = $this->rc->user->get_username("domain");
+
+        $imap_user = empty($_SESSION['username']) ? $mail_local : $_SESSION['username'];
+
+        $this->log->trace($username_tmpl,$mail,$mail_local,$mail_domain,$imap_user);
+
+        return str_replace(["%s", "%i", "%e", "%l", "%u", "%d", "%h"],
+            [$user, $imap_user, $mail, $mail_local, $mail_local, $mail_domain, $_SESSION['storage_host'] ?? ""],
+            $username_tmpl);
+    }
+
+    /**
+     * List of passwords in the Settings tab content.
+     */
+    public function apppw_listhtml(): string {
+        $s = $this->db->prepare("SELECT * FROM app_passwords_with_log WHERE uid = :uid;");
+        $user_name = $this->resolve_username();
+
         $s->bindValue("uid", $user_name);
         $s->execute();
-//        $r = $s->get_result();
 
-        $table = new \html_table([]);
-        $table->add_row();
-        $table->add_header([], "");
-        $table->add_header([], $this->gettext("imap_setting"));
-        $table->add_header([], $this->gettext("smtp_setting"));
-
-        $table->add_row(['class' => 'small_row']);
-        $table->add([], "");
-        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("server"));
-        $table->add_row();
-        $table->add([], $this->gettext("server"));
-        $table->add([], $this->rc->config->get("advertised_client_imap_host"));
-        $table->add([], $this->rc->config->get("advertised_client_smtp_host"));
-        $table->add_row(['class' => 'small_row']);
-        $table->add([], "");
-        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("port"));
-        $table->add_row();
-        $table->add([], $this->gettext("port"));
-        $table->add([], $this->rc->config->get("advertised_client_imap_port"));
-        $table->add([], $this->rc->config->get("advertised_client_smtp_port"));
-        $table->add_row(['class' => 'small_row']);
-        $table->add([], "");
-        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("protocol"));
-        $table->add_row();
-        $table->add([], $this->gettext("protocol"));
-        $table->add([], $this->rc->config->get("advertised_client_imap_protocol"));
-        $table->add([], $this->rc->config->get("advertised_client_smtp_protocol"));
-        $table->add_row(['class' => 'small_row']);
-        $table->add([], "");
-        $table->add(['colspan' => 2, 'class' => 'small_label'], $this->gettext("password_method"));
-        $table->add_row();
-        $table->add([], $this->gettext("password_method"));
-        $table->add([], $this->rc->config->get("advertised_client_imap_password_method"));
-        $table->add([], $this->rc->config->get("advertised_client_smtp_password_method"));
-
-        $html = "";
+        $html = \html::span(['class' => 'no_passwords '.($s->rowCount() == 0 ? '' : 'hidden')],$this->gettext('no_passwords'));
 
         while ($row = $s->fetch(\PDO::FETCH_ASSOC)) {
-            $now = new DateTimeImmutable();
-            $lu = new DateTimeImmutable($row['last_used']);
-            $ct = new DateTimeImmutable($row['created']);
+            $this->log->trace($row);
+            $now = new DateTimeImmutable("now", new DateTimeZone("UTC"));
 
-            $now->diff($lu)->format("%d days ago");
+            $last_used = new DateTimeImmutable($row['last_used_timestamp'] ?? "01-01-1970 00:00:00.0000", new DateTimeZone("UTC"));
+            $created = new DateTimeImmutable($row['created'] ?? "01-01-1970 00:00:00.0000", new DateTimeZone("UTC"));
+
+            $this->log->trace($now, $last_used, $created);
 
             $html .= \html::div(['class' => 'apppw_entry', 'data-apppw-id' => $row['id']],
                 \html::span(['class' => 'apppw_title'],
                     \html::span(['class' => 'apppw_title_text'], ($row['comment'] ?? $this->gettext('unnamed_app'))).
-                            \html::a(['class' => 'apppw_title_edit', 'title' => $this->gettext('edit'), 'onclick' => 'apppw_edit('.$row['id'].')'], '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>')).
-                        \html::span(['class' => 'apppw_lastused', 'title' => $row['last_used'] == null ? $this->gettext('never_used') : $lu->format(DATE_RFC822)],
-                            $row['last_used'] == null ?
+                            \html::a(['class' => 'apppw_title_edit', 'title' => $this->gettext('edit'), 'onclick' => 'apppw_edit('.$row['id'].')'], IMAP_APPPW_EDIT_BTN)).
+                        \html::span(['class' => 'apppw_lastused', 'title' => $row['last_used_timestamp'] == null ? $this->gettext('never_used') : $last_used->format(DATE_RFC822)],
+                            $row['last_used_timestamp'] == null ?
                             $this->gettext('never_used') :
-                            $this->gettext('last_used')." ".$this->format_diff($now->diff($lu))." ".$this->gettext('last_used_from')." ".
+                            $this->gettext('last_used')." ".$this->format_diff($now->diff($last_used))." ".$this->gettext('last_used_from')." ".
                                 \html::span(['title' => $row['src_ip']],
-                                    (empty($row['src_rdns']) ? $row['src_ip'] : $row['src_rdns']).(empty($row['src_isp']) ? "" : " (".$row['src_isp'].")"))).
+                                    (empty($row['last_used_src_rdns']) ? $row['last_used_src_ip'] : $row['last_used_src_rdns']).(empty($row['last_used_src_isp']) ? "" : " (".$row['last_used_src_isp'].")"))).
                         (empty($row['src_loc']) ? "" : \html::span(['class' => 'apppw_location'], $row['src_loc'])).
-                        \html::span(['class' => 'apppw_created', 'title' => $ct->format(DATE_RFC822)], $this->gettext('created')." ".$this->format_diff($now->diff($ct))).
+                        \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created')." ".$this->format_diff($now->diff($created))).
                         \html::a(['class' => 'apppw_delete', 'onclick' => 'apppw_remove('.$row['id'].')'], $this->gettext("delete"))
             );
         }
 
-//        $this->inc
-        return \html::div(["class" => "apppw_info"],
-            \html::p([], $this->gettext("page_allows_password_creation_for_clients")).
-            \html::p([], $this->gettext("use_the_following_settings")). $table->show()
-        ).\html::div(['class' => 'apppw','id' => 'apppw_container'], \html::div(['class' => 'apppw_list','id' => 'apppw_list'],$html).
-            \html::div(['class' => 'apppw_actions'],
-                (new \html_button(['onclick' => 'apppw_add()', 'class' => 'create']))->show($this->gettext('add')).
-                (new \html_button(['onclick' => 'apppw_remove_all()', 'class' => 'delete']))->show($this->gettext('delete_all'))
-            ));
+        return $html;
     }
 
     public function remove_password(mixed $attr = null) : void
     {
-        rcmail::write_log('imap_apppw', print_r($attr, true));
-        rcmail::write_log('imap_apppw', print_r($_REQUEST, true));
+        $this->log->debug($attr,$_REQUEST);
 
-        $s = $this->db->prepare("DELETE FROM app_passwords WHERE id = :id;");
-//        $s->bind_param("i", $_REQUEST['id']);
+
+        // We need uid here to protect from users delete each others passwords
+        $s = $this->db->prepare("DELETE FROM app_passwords WHERE id = :id AND uid = :uid;");
+
         $s->bindValue("id", $_REQUEST['id'], \PDO::PARAM_INT);
+        $s->bindValue("uid", $this->resolve_username());
 
         if($s->execute()) {
             $this->rc->output->command("plugin.apppw_remove_from_list", ["id" => $_REQUEST['id']]);
@@ -190,6 +204,8 @@ class imap_apppasswd extends \rcube_plugin
             $salt = openssl_random_pseudo_bytes(16);
         }
 
+        //Map random chars to a-zA-Z0-9
+        //TODO: we might want to consider excluding vowels to prevent accidental generation of words or even slurs
         $pw = implode("-", str_split(implode(array_map(function($c) {
             $i = ord($c);
             $i = $i % (26 + 26 + 10);
@@ -204,12 +220,11 @@ class imap_apppasswd extends \rcube_plugin
         }, str_split($rand))), $this->rc->config->get('imap_apppasswd_chunksize', 4)));
 
         $hash = "{CRYPT}".crypt($pw, "$6$".$salt);
-        rcmail::write_log('imap_apppw', $hash);
+        $this->log->debug($hash);
 
+        $s = $this->db->prepare("INSERT INTO app_passwords (uid, password, created) VALUES (:uid, :password, UTC_TIMESTAMP());");
 
-        $s = $this->db->prepare("INSERT INTO app_passwords (uid, password) VALUES (:uid, :password);");
-//        $s->bind_param("ss", explode("@", $this->rc->get_user_name())[0], $hash);
-        $s->bindValue("uid", explode("@", $this->rc->get_user_name())[0]);
+        $s->bindValue("uid", $this->resolve_username());
         $s->bindValue("password", $hash);
 
         if($s->execute()) {
@@ -224,9 +239,11 @@ class imap_apppasswd extends \rcube_plugin
     {
         $name = strip_tags($_REQUEST['name']);
         $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
-        $s = $this->db->prepare("UPDATE app_passwords SET comment = :comment WHERE id = :id;");
-        $s->bindValue("comment", $name, \PDO::PARAM_STR);
+        // We need uid here to protect from users renaming each others passwords
+        $s = $this->db->prepare("UPDATE app_passwords SET comment = :comment WHERE id = :id AND uid = :uid;");
+        $s->bindValue("comment", $name);
         $s->bindValue("id", $id, \PDO::PARAM_INT);
+        $s->bindValue("uid", $this->resolve_username());
 
         if($s->execute()) {
             $this->rc->output->command("plugin.apppw_renamed", ["id" => $id, "name" => $name]);
