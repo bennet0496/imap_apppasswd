@@ -1,12 +1,12 @@
 {
-  "name": "bennet0496/imap_apppasswd",
+  "name": "mpipks/imap_apppasswd",
   "license": "MIT",
   "description": "Create App-Passwords for IMAP and SMTP",
   "type": "roundcube-plugin",
   "authors": [
     {
       "name": "Bennet Becker",
-      "email": "dev@bennet.cc"
+      "email": "bbecker@pks.mpg.de"
     }
   ],
   "repositories": [
