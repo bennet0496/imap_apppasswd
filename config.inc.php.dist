@@ -22,14 +22,20 @@
  */
 
 
+$config['imap_apppasswd_db_dsn'] = "mysql:host=127.0.0.1;dbname=mail_auth";
+$config['imap_apppasswd_db_username'] = "roundcube";
+$config['imap_apppasswd_db_password'] = "password";
+
 $config['imap_apppasswd_length'] = 16;
 $config['imap_apppasswd_chunksize'] = 4;
 
-$config['advertised_client_imap_host'] = "imap.example.com";
-$config['advertised_client_smtp_host'] = "smtp.example.com";
-$config['advertised_client_imap_port'] = "993";
-$config['advertised_client_smtp_port'] = "587";
-$config['advertised_client_imap_protocol'] = "SSL/TLS";
-$config['advertised_client_smtp_protocol'] = "STARTTLS";
-$config['advertised_client_imap_password_method'] = "Normal password";
-$config['advertised_client_smtp_password_method'] = "Normal password";
+$config['imap_apppasswd_imap_username'] = "%u";
+
+$config['imap_apppasswd_advertised_client_imap_host'] = "imap.example.com";
+$config['imap_apppasswd_advertised_client_smtp_host'] = "smtp.example.com";
+$config['imap_apppasswd_advertised_client_imap_port'] = "993";
+$config['imap_apppasswd_advertised_client_smtp_port'] = "587";
+$config['imap_apppasswd_advertised_client_imap_protocol'] = "SSL/TLS";
+$config['imap_apppasswd_advertised_client_smtp_protocol'] = "STARTTLS";
+$config['imap_apppasswd_advertised_client_imap_password_method'] = "Normal password";
+$config['imap_apppasswd_advertised_client_smtp_password_method'] = "Normal password";
