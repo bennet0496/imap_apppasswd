@@ -6,6 +6,7 @@ $labels['never_used'] = "Never used";
 $labels['last_used_from'] = "from";
 $labels['created'] = "Created";
 $labels['unnamed_app'] = "Unnamed App";
+$labels['unknown_location'] = "Unknown location";
 $labels['delete'] = "Delete";
 $labels['delete_all'] = "Delete All";
 $labels['add'] = "Add";
