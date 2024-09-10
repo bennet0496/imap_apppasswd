@@ -50,7 +50,7 @@ class imap_apppasswd extends \rcube_plugin
         $this->add_texts('l10n/', true);
         $this->rc = \rcmail::get_instance();
 
-        $this->log = new \bennetcc\Log(IMAP_APPPW_LOG_FILE, IMAP_APPPW_PREFIX, $this->rc->config->get(__('log_level'), \bennetcc\LogLevel::WARNING->value));
+        $this->log = new \bennetcc\Log(IMAP_APPPW_LOG_FILE, IMAP_APPPW_PREFIX, $this->rc->config->get(__('log_level'), \bennetcc\LogLevel::INFO->value));
 
         if ($this->rc->task == 'settings') {
             $dsn = $this->rc->config->get(__('db_dsn'));
@@ -181,12 +181,12 @@ class imap_apppasswd extends \rcube_plugin
     public function remove_password(mixed $attr = null) : void
     {
         $this->log->debug($attr,$_REQUEST);
-
+        $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
 
         // We need uid here to protect from users delete each others passwords
         $s = $this->db->prepare("DELETE FROM app_passwords WHERE id = :id AND uid = :uid;");
 
-        $s->bindValue("id", $_REQUEST['id'], \PDO::PARAM_INT);
+        $s->bindValue("id", $id, \PDO::PARAM_INT);
         $s->bindValue("uid", $this->resolve_username());
 
         if($s->execute()) {
@@ -195,6 +195,8 @@ class imap_apppasswd extends \rcube_plugin
         } else {
             $this->rc->output->show_message($this->gettext("apppw_deleted_error"), "error");
         }
+
+        $this->log->info($this->rc->user->get_username()." deleted app password ".$id);
     }
 
     public function add_password() : void
@@ -236,6 +238,8 @@ class imap_apppasswd extends \rcube_plugin
             $this->rc->output->show_message($this->gettext("apppw_add_error"), "error");
         }
 
+        $this->log->info($this->rc->user->get_username()." added an app password");
+
     }
 
     public function rename_password() : void
@@ -253,6 +257,8 @@ class imap_apppasswd extends \rcube_plugin
         } else {
             $this->rc->output->show_message($this->gettext("apppw_rename_error"), "error");
         }
+
+        $this->log->info($this->rc->user->get_username()." renamed app password ".$id." to ".$name);
     }
     private function format_diff(DateInterval $diff) : string {
         if($diff->format("%y") != "0") {
