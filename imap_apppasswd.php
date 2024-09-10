@@ -50,7 +50,7 @@ class imap_apppasswd extends \rcube_plugin
         $this->add_texts('l10n/', true);
         $this->rc = \rcmail::get_instance();
 
-        $this->log = new \bennetcc\Log(IMAP_APPPW_LOG_FILE, IMAP_APPPW_PREFIX, $this->rc->config->get(__('log_level'), \bennetcc\LogLevel::WARNING));
+        $this->log = new \bennetcc\Log(IMAP_APPPW_LOG_FILE, IMAP_APPPW_PREFIX, $this->rc->config->get(__('log_level'), \bennetcc\LogLevel::WARNING->value));
 
         if ($this->rc->task == 'settings') {
             $dsn = $this->rc->config->get(__('db_dsn'));
@@ -90,11 +90,14 @@ class imap_apppasswd extends \rcube_plugin
 
     public function show_settings(): void
     {
-//        $this->register_handler('plugin.body', [$this, 'settingshtml']);
         $this->register_handler('imap_apppasswd.apppw_list', [$this, 'apppw_listhtml']);
+        $this->register_handler('imap_apppasswd.username', function ($attrib) {
+            return html::quote(rcube_utils::idn_to_utf8($this->resolve_username()));
+        });
+        $this->register_handler('imap_apppasswd.smtp_username', [$this, 'resolve_username']);
 
         $this->rc->output->set_pagetitle($this->gettext('imap_apppasswd'));
-//        $this->rc->output->send('plugin');
+
         $this->include_stylesheet("imap_apppasswd.css");
         $this->include_script("imap_apppasswd.js");
 
@@ -120,7 +123,7 @@ class imap_apppasswd extends \rcube_plugin
 
         $this->log->trace("user: ".$user);
 
-        $username_tmpl = $this->rc->config->get(__("imap_username"));
+        $username_tmpl = $this->rc->config->get(__("username"));
 
         $mail = $this->rc->user->get_username("mail");
         $mail_local = $this->rc->user->get_username("local");
@@ -164,7 +167,7 @@ class imap_apppasswd extends \rcube_plugin
                             $row['last_used_timestamp'] == null ?
                             $this->gettext('never_used') :
                             $this->gettext('last_used')." ".$this->format_diff($now->diff($last_used))." ".$this->gettext('last_used_from')." ".
-                                \html::span(['title' => $row['src_ip']],
+                                \html::span(['title' => $row['src_ip'] ?? ""],
                                     (empty($row['last_used_src_rdns']) || $row['last_used_src_rdns'] == "<>" ? $row['last_used_src_ip'] : $row['last_used_src_rdns']).(empty($row['last_used_src_isp']) ? "" : " (".$row['last_used_src_isp'].")"))).
                         (empty($row['src_loc']) ? "" : \html::span(['class' => 'apppw_location'], $row['src_loc'])).
                         \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created')." ".$this->format_diff($now->diff($created))).

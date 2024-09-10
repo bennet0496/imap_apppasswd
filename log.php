@@ -29,11 +29,11 @@ namespace bennetcc {
         private string $app_prefix;
         private LogLevel $log_level;
 
-        public function __construct(string $file, string $app_prefix, LogLevel $log_level)
+        public function __construct(string $file, string $app_prefix, LogLevel|int $log_level)
         {
             $this->file = $file;
             $this->app_prefix = $app_prefix;
-            $this->log_level = $log_level;
+            $this->log_level = LogLevel::from($log_level);
         }
 
         private function log(string $prefix, ...$lines): void

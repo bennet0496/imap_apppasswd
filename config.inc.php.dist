@@ -29,7 +29,7 @@ $config['imap_apppasswd_db_password'] = "password";
 $config['imap_apppasswd_length'] = 16;
 $config['imap_apppasswd_chunksize'] = 4;
 
-$config['imap_apppasswd_imap_username'] = "%u";
+$config['imap_apppasswd_username'] = "%u";
 
 $config['imap_apppasswd_advertised_client_imap_host'] = "imap.example.com";
 $config['imap_apppasswd_advertised_client_smtp_host'] = "smtp.example.com";
