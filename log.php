@@ -42,6 +42,11 @@ namespace bennetcc {
                 $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
                 $func = $bt["function"];
                 $cls = $bt["class"];
+                if ($cls == "bennetcc\Log") {
+                    $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3)[2];
+                    $func = $bt["function"];
+                    $cls = $bt["class"];
+                }
                 if (!is_string($line)) {
                     $line = print_r($line, true);
                 }
@@ -59,35 +64,35 @@ namespace bennetcc {
         public function trace(...$lines): void
         {
             if ($this->log_level >= LogLevel::TRACE) {
-                $this->log("TRACE", $lines);
+                $this->log("TRACE", ...$lines);
             }
         }
 
         public function debug(...$lines): void
         {
             if ($this->log_level >= LogLevel::DEBUG) {
-                $this->log("DEBUG", $lines);
+                $this->log("DEBUG", ...$lines);
             }
         }
 
         public function warn(...$lines): void
         {
             if ($this->log_level >= LogLevel::WARNING) {
-                $this->log("WARN", $lines);
+                $this->log("WARN", ...$lines);
             }
         }
 
         public function info(...$lines): void
         {
             if ($this->log_level >= LogLevel::INFO) {
-                $this->log("INFO", $lines);
+                $this->log("INFO", ...$lines);
             }
         }
 
         public function error(...$lines): void
         {
             if ($this->log_level >= LogLevel::ERROR) {
-                $this->log("ERROR", $lines);
+                $this->log("ERROR", ...$lines);
             }
         }
     }
