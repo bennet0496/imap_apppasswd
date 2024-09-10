@@ -70,6 +70,7 @@
 
 .apppw_title_edit:hover {
     background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
 }
 
 .apppw_title_box {
@@ -109,6 +110,7 @@
 
 .apppw_delete {
     cursor: pointer;
+    width: fit-content !important;
 }
 
 .apppw_actions {
