@@ -42,8 +42,8 @@ function delete_all() {
 }
 
 function apppw_edit(id) {
-    let elm = document.querySelector('[data-apppw-id="' + id +'"] .apppw_title .apppw_title_text');
-    let btn = document.querySelector('[data-apppw-id="' + id +'"] .apppw_title .apppw_title_edit');
+    const elm = document.querySelector('[data-apppw-id="' + id +'"] .apppw_title .apppw_title_text');
+    const btn = document.querySelector('[data-apppw-id="' + id +'"] .apppw_title .apppw_title_edit');
 
     let box = document.createElement("input");
     box.value = elm.innerText;
@@ -62,7 +62,12 @@ function apppw_edit(id) {
 
 rcmail.addEventListener("plugin.apppw_remove_from_list", function (data){
     // alert();
-    document.querySelector('[data-apppw-id="' + data.id +'"]').remove();
+    if (data.id === "all") {
+        document.querySelectorAll('[data-apppw-id]').forEach((e) => e.remove());
+    } else {
+        document.querySelector('[data-apppw-id="' + data.id + '"]').remove();
+    }
+
     if (document.querySelector(".apppw_list > .apppw_entry") === null) {
         const npw = document.querySelector(".apppw_list > .no_passwords");
         if (npw) {
@@ -118,19 +123,11 @@ rcmail.addEventListener("plugin.apppw_add", function (data) {
     }
 });
 
-function toggle_visibility(clickEvent) {
-    let node = clickEvent.target;
-    while (!node.dataset.apppwId) {
-        node = node.parentNode;
-    }
-    console.log(node);
-}
-
 rcmail.addEventListener("plugin.apppw_renamed", function(data) {
-    let box = document.querySelector('[data-apppw-id="' + data.id +'"] .apppw_title .apppw_title_box');
-    let btn = document.querySelector('[data-apppw-id="' + data.id +'"] .apppw_title .apppw_title_edit');
+    const box = document.querySelector('[data-apppw-id="' + data.id +'"] .apppw_title .apppw_title_box');
+    const btn = document.querySelector('[data-apppw-id="' + data.id +'"] .apppw_title .apppw_title_edit');
 
-    let span = document.createElement("span");
+    const span = document.createElement("span");
     span.className = "apppw_title_text";
     span.innerText = data.name;
 
@@ -140,7 +137,7 @@ rcmail.addEventListener("plugin.apppw_renamed", function(data) {
 });
 
 rcmail.addEventListener("init", function (ev) {
-    console.log(rcmail, window.rcmail)
+    // console.log(rcmail, window.rcmail)
     rcmail.register_command("plugin.imap_apppasswd.apppw_add", apppw_add, true)
     rcmail.register_command("plugin.imap_apppasswd.apppw_remove_all", delete_all, true)
 })

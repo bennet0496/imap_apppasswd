@@ -199,6 +199,25 @@ class imap_apppasswd extends \rcube_plugin
         $this->log->info($this->rc->user->get_username()." deleted app password ".$id);
     }
 
+    public function delete_all(mixed $attr = null) : void
+    {
+        $this->log->debug($attr,$_REQUEST);
+
+        // We need uid here to protect from users delete each others passwords
+        $s = $this->db->prepare("DELETE FROM app_passwords WHERE uid = :uid;");
+
+        $s->bindValue("uid", $this->resolve_username());
+
+        if($s->execute()) {
+            $this->rc->output->command("plugin.apppw_remove_from_list", ["id" => "all"]);
+            $this->rc->output->show_message($this->gettext("apppw_deleted_success"));
+        } else {
+            $this->rc->output->show_message($this->gettext("apppw_deleted_error"), "error");
+        }
+
+        $this->log->info($this->rc->user->get_username()." deleted all app passwords");
+    }
+
     public function add_password() : void
     {
         try {
