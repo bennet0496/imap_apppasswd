@@ -146,9 +146,9 @@ rcmail.addEventListener("init", function (ev) {
 })
 
 window.addEventListener("load",function (event) {
-    console.log("load", event);
+    // console.log("load", event);
     document.querySelectorAll("span.apppw_lastused, span.apppw_created").forEach((value) => {
-        console.log(value);
+        // console.log(value);
         const ts = Date.parse(value.title)
         if (!Number.isNaN(ts)){
             value.title = new Date(ts).toLocaleString(undefined, {dateStyle:"full", timeStyle: "long"});
