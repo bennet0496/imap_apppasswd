@@ -169,7 +169,7 @@ class imap_apppasswd extends \rcube_plugin
                             $this->gettext('last_used')." ".$this->format_diff($now->diff($last_used))." ".$this->gettext('last_used_from')." ".
                                 \html::span(['title' => $row['src_ip'] ?? ""],
                                     (empty($row['last_used_src_rdns']) || $row['last_used_src_rdns'] == "<>" ? $row['last_used_src_ip'] : $row['last_used_src_rdns']).(empty($row['last_used_src_isp']) ? "" : " (".$row['last_used_src_isp'].")"))).
-                        (empty($row['last_used_src_loc']) ? $this->gettext('unknown_location') : \html::span(['class' => 'apppw_location'], $row['last_used_src_loc'])).
+                        \html::span(['class' => 'apppw_location'], (empty($row['last_used_src_loc']) ? $this->gettext('unknown_location') : $row['last_used_src_loc'])).
                         \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created')." ".$this->format_diff($now->diff($created))).
                         \html::a(['class' => 'apppw_delete', 'onclick' => 'apppw_remove('.$row['id'].')'], $this->gettext("delete"))
             );

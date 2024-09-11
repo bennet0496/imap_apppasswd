@@ -68,6 +68,10 @@
     place-content: center;
 }
 
+.apppw_password {
+    font-family: monospace;
+}
+
 .apppw_title_edit:hover {
     background: rgba(255, 255, 255, 0.3);
     cursor: pointer;
@@ -243,6 +247,7 @@
         /*max-width: calc(100% - 2rem) !important;*/
         /*width: 10px !important;*/
         place-self: start;
+        margin: 0 auto;
     }
     .apppw {
         min-width: 100%;

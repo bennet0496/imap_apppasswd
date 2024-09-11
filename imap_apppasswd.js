@@ -21,8 +21,13 @@
  */
 
 function apppw_remove(id) {
-    rcmail.http_post("plugin.imap_apppasswd_remove", {'id': id});
-    // document.querySelector('[data-apppw-id="' + id +'"]').remove();
+    const apppw_remove_i = () => {
+        rcmail.http_post("plugin.imap_apppasswd_remove", {'id': id});
+    }
+    const name = document.querySelector('[data-apppw-id="' + id +'"] > * > .apppw_title_text').textContent
+    rcmail.confirm_dialog(rcmail.gettext("confirm_delete_single", "imap_apppasswd").replace("%password%", name), "delete", apppw_remove_i, {
+        button_class: "delete"
+    });
 }
 
 function apppw_add() {
@@ -30,7 +35,10 @@ function apppw_add() {
 }
 
 function delete_all() {
-    rcmail.http_post("plugin.imap_apppasswd_delete_all");
+    const d = () => rcmail.http_post("plugin.imap_apppasswd_delete_all");
+    rcmail.confirm_dialog(rcmail.gettext("confirm_delete_all", "imap_apppasswd"), rcmail.gettext("delete_all", "imap_apppasswd"), d, {
+        button_class: "delete"
+    });
 }
 
 function apppw_edit(id) {
@@ -64,86 +72,44 @@ rcmail.addEventListener("plugin.apppw_remove_from_list", function (data){
 }, true);
 
 rcmail.addEventListener("plugin.apppw_add", function (data) {
-    let node = document.createElement("div")
-    node.className = "apppw_entry";
-    node.dataset.apppwId = data.id;
+    const node = document.querySelector("#new_entry_template").content.cloneNode(true);
+    node.querySelector("input.apppw_password").value = data.passwd;
 
-    let title = document.createElement("span")
-    title.className = "apppw_title";
-    // title.innerText = "Unnamed";
+    node.querySelector(".apppw_entry").dataset.apppwId = data.id;
+    node.querySelector(".apppw_content_action.toggle_vis").onclick = function (event) {
+        const box = document.querySelector("[data-apppw-id='"+data.id+"'] > * > input.apppw_password");
+        const target = event.target.nodeName === 'svg' ? event.target.parentNode : event.target;
 
-    let title_box = document.createElement("input");
-    title_box.value = window.rcmail.gettext("unnamed_app", "imap_apppasswd");
-    title_box.id = "apppw_title_box_" + data.id;
-    title_box.className = "apppw_title_box";
-    title_box.type = "text";
-
-    let title_btn = document.createElement("a");
-    title_btn.className = "apppw_title_edit";
-    title_btn.title = window.rcmail.gettext("done", "imap_apppasswd");
-    title_btn.onclick = function () {
-        rcmail.http_post("plugin.imap_apppasswd_rename", {"id": data.id, "name": title_box.value});
+        if(box.type === "password") { //show
+            box.type = "text";
+            target.innerHTML = document.querySelector("#symbol_hide").content.firstElementChild.outerHTML;
+        } else if (box.type === "text") {
+            box.type = "password";
+            target.innerHTML = document.querySelector("#symbol_show").content.firstElementChild.outerHTML;
+        }
     };
-    title_btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
 
-    let content = document.createElement("span")
-    content.className = "apppw_content";
-
-    let box = document.createElement("input");
-    box.value = data.passwd;
-    box.id = "apppw_content_box_" + data.id;
-    box.type = "password";
-    // box.readOnly = true;
-    box.onkeydown = function (ev) {
-        return false;
-    }
-
-
-    let copy = document.createElement("span");
-    copy.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/></svg>'
-    copy.className = "apppw_content_action";
-    copy.onclick = function () {
+    node.querySelector(".apppw_content_action.copy").onclick = function (_) {
         navigator.clipboard.writeText(data.passwd).then(() => {
             window.rcmail.display_message(window.rcmail.gettext("copied", "imap_apppasswd"));
         }).catch(() => {
             window.rcmail.display_message(window.rcmail.gettext("copy_failed_check_perms", "imap_apppasswd"), "error");
         });
     }
-    let show = document.createElement("span");
-    show.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/></svg>';
-    show.className = "apppw_content_action";
-    show.onclick = function (ev) {
-        let box = document.getElementById("apppw_content_box_" + data.id);
-        let target = ev.target.nodeName === 'svg' ? ev.target.parentNode : ev.target;
 
-        if(box.type === "password") { //show
-            box.type = "text";
-            target.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="m644-428-58-58q9-47-27-88t-93-32l-58-58q17-8 34.5-12t37.5-4q75 0 127.5 52.5T660-500q0 20-4 37.5T644-428Zm128 126-58-56q38-29 67.5-63.5T832-500q-50-101-143.5-160.5T480-720q-29 0-57 4t-55 12l-62-62q41-17 84-25.5t90-8.5q151 0 269 83.5T920-500q-23 59-60.5 109.5T772-302Zm20 246L624-222q-35 11-70.5 16.5T480-200q-151 0-269-83.5T40-500q21-53 53-98.5t73-81.5L56-792l56-56 736 736-56 56ZM222-624q-29 26-53 57t-41 67q50 101 143.5 160.5T480-280q20 0 39-2.5t39-5.5l-36-38q-11 3-21 4.5t-21 1.5q-75 0-127.5-52.5T300-500q0-11 1.5-21t4.5-21l-84-82Zm319 93Zm-151 75Z"/></svg>'
-        } else if (box.type === "text") {
-            box.type = "password";
-            target.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/></svg>';
-        }
-    }
-
-    let ok = document.createElement("a");
-    ok.className = "apppw_delete";
-    ok.innerText = rcmail.gettext("ok", "imap_apppasswd");
-    ok.onclick = function (ev) {
-        ev.target.innerText = rcmail.gettext("delete", "imap_apppasswd");
+    node.querySelector(".apppw_delete").onclick = function (event) {
+        event.target.innerText = rcmail.gettext("delete", "imap_apppasswd");
         document.querySelector("[data-apppw-id=\"" + data.id +"\"] .apppw_content").remove();
-        ev.target.onclick = () => apppw_remove(data.id);
-        //rename
-        rcmail.http_post("plugin.imap_apppasswd_rename", {"id": data.id, "name": title_box.value});
+        event.target.onclick = () => apppw_remove(data.id);
+        //rename apppw_title_box
+        const value = document.querySelector("[data-apppw-id=\"" + data.id +"\"] > * > .apppw_title_box").value
+        rcmail.http_post("plugin.imap_apppasswd_rename", {"id": data.id, "name": value});
     }
 
-    content.append(box);
-    content.append(show);
-    content.append(copy);
-    title.append(title_box);
-    title.append(title_btn)
-    node.append(title);
-    node.append(content);
-    node.append(ok);
+    node.querySelector(".apppw_title_edit").onclick = function () {
+        const value = document.querySelector("[data-apppw-id=\"" + data.id +"\"] > * > .apppw_title_box").value
+        rcmail.http_post("plugin.imap_apppasswd_rename", {"id": data.id, "name": value});
+    }
 
     document.getElementById("apppw_list").append(node);
     const npw = document.querySelector(".apppw_list > .no_passwords");
@@ -151,6 +117,14 @@ rcmail.addEventListener("plugin.apppw_add", function (data) {
         npw.classList.add("hidden");
     }
 });
+
+function toggle_visibility(clickEvent) {
+    let node = clickEvent.target;
+    while (!node.dataset.apppwId) {
+        node = node.parentNode;
+    }
+    console.log(node);
+}
 
 rcmail.addEventListener("plugin.apppw_renamed", function(data) {
     let box = document.querySelector('[data-apppw-id="' + data.id +'"] .apppw_title .apppw_title_box');
