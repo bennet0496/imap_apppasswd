@@ -169,7 +169,7 @@
 }
 
 .apppw_info {
-    margin: calc(58px + 3rem) 1rem 1rem 1rem;
+    margin: calc(58px + 1rem) 1rem 1rem 1rem;
     display: flex;
     place-content: center;
     place-items: center;
