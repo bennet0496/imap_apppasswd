@@ -44,5 +44,5 @@ $labels['port'] = "Port";
 $labels['protocol'] = "Connection Security";
 $labels['password_method'] = "Authentication Method";
 
-$labels['imap_setting'] = "Incoming (IMAP) Setting";
-$labels['smtp_setting'] = "Outgoing (SMTP) Setting";
+$labels['imap_setting'] = "Incoming (IMAP) Settings";
+$labels['smtp_setting'] = "Outgoing (SMTP) Settings";
