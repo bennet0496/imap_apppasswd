@@ -128,8 +128,9 @@ class imap_apppasswd extends \rcube_plugin
             $table->add_header([], $this->gettext("src_isp"));
 
             while ($row = $s->fetch(PDO::FETCH_ASSOC)) {
+                $timestamp = new DateTimeImmutable($row['timestamp'] ?? "01-01-1970 00:00:00.0000", new DateTimeZone("UTC"));
                 $table->add_row();
-                $table->add(['class' => 'timestamp'], $row['timestamp']);
+                $table->add(['class' => 'timestamp'], $timestamp->format(DATE_RFC822));
                 $table->add([], strtoupper($row['service']));
                 $table->add([], $row['src_ip']);
                 $table->add([], $row['src_rdns']);
