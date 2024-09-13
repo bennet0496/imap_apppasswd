@@ -151,4 +151,11 @@ window.addEventListener("load",function (event) {
             value.title = new Date(ts).toLocaleString(undefined, {dateStyle:"full", timeStyle: "long"});
         }
     });
+    document.querySelectorAll("td.timestamp").forEach((value) => {
+        // console.log(value);
+        const ts = Date.parse(value.innerHTML)
+        if (!Number.isNaN(ts)){
+            value.innerHTML = new Date(ts).toLocaleString(undefined, {dateStyle:"medium", timeStyle: "long"});
+        }
+    });
 });

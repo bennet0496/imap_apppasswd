@@ -166,6 +166,16 @@
     .apppw_content_action svg {
         filter: invert(.9);
     }
+
+    #layout > div > .header-apppw {
+        border-color: #4d6066;
+        color: rgb(197, 209, 211);
+        background-color: transparent;
+    }
+}
+
+.nowrap {
+    white-space: nowrap !important;
 }
 
 .apppw_info {
@@ -240,7 +250,7 @@
         text-overflow: clip;
         overflow: hidden;
         /*width: 50%;*/
-        white-space: normal !important;
+        white-space: normal;
         text-align: start;
     }
     .apppw_info table {
@@ -252,4 +262,29 @@
     .apppw {
         min-width: 100%;
     }
+}
+
+#layout > div > .header-apppw {
+    border-bottom: 1px solid #d4dbde;
+    color: #2c363a;
+    background-color: #f4f4f4;
+}
+
+#layout > div > .header-apppw {
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 58px;
+    height: 58px;
+    min-height: 58px;
+    padding: 0 0.25em;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    justify-content: space-between;
+}
+
+.block {
+    display: block;
 }

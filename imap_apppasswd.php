@@ -66,11 +66,79 @@ class imap_apppasswd extends \rcube_plugin
 
             $this->add_hook('settings_actions', [$this, 'settings_actions']);
             $this->register_action('plugin.imap_apppasswd', [$this, 'show_settings']);
+            $this->register_action('plugin.imap_apppasswd.history', [$this, 'show_history']);
+
             $this->register_action('plugin.imap_apppasswd_remove', [$this, 'remove_password']);
             $this->register_action('plugin.imap_apppasswd_delete_all', [$this, 'delete_all']);
             $this->register_action('plugin.imap_apppasswd_add', [$this, 'add_password']);
             $this->register_action('plugin.imap_apppasswd_rename', [$this, 'rename_password']);
         }
+    }
+
+    public function show_history(): void {
+        $this->include_stylesheet("imap_apppasswd.css");
+        $this->include_script("imap_apppasswd.js");
+        $pwid = filter_input(INPUT_GET, "_pwid", FILTER_SANITIZE_NUMBER_INT);
+        if (!empty($pwid) && is_numeric($pwid)) {
+            $s = $this->db->prepare("SELECT * FROM app_passwords WHERE uid = :uid and id = :id;");
+            $user_name = $this->resolve_username();
+
+            $s->bindValue("uid", $user_name);
+            $s->bindValue("id", $pwid);
+            $s->execute();
+            if ($s->rowCount() == 1) {
+                $row = $s->fetch(PDO::FETCH_ASSOC);
+                $this->register_handler('imap_apppasswd.history', $this->historyhtml($pwid));
+                $this->register_handler('imap_apppasswd.imap_apppasswd.history_title', function ($ignore) use ($row) {
+                    return $this->gettext(['name' => 'imap_apppasswd_history_for', 'vars' => ['password' => $row['comment']]]);
+                });
+                $this->register_handler('imap_apppasswd.imap_apppasswd.history_title.back', function ($ignore) use ($row) {
+                    return $this->rc->url("plugin.imap_apppasswd");
+                });
+                $this->rc->output->set_pagetitle($this->gettext(['name' => 'imap_apppasswd_history_for', 'vars' => ['password' => $row['comment']]]));
+                $this->rc->output->send('imap_apppasswd.history');
+                return;
+            }
+        }
+
+        $this->rc->output->redirect("plugin.imap_apppasswd");
+
+    }
+
+    function historyhtml(int $id): callable {
+        return function ($args) use ($id) {
+            $this->log->debug("password ".$id);
+            $offset = intval(filter_input(INPUT_GET, "_offset", FILTER_SANITIZE_NUMBER_INT) ?? 0);
+            $s = $this->db->prepare("SELECT * FROM log WHERE pwid = :id ORDER BY timestamp DESC LIMIT 20;");
+            $s->bindValue("id", $id);
+//            $s->bindValue("offset", $offset);
+            $s->execute();
+
+            if ($s->rowCount() == 0) {
+                return \html::span(["class" => "my-5 block w-100 h-100 block text-center"], $this->gettext("no_history"));
+            }
+
+            $table = new \html_table(["class" => "w-100"]);
+            $table->add_row();
+            $table->add_header([], $this->gettext("timestamp"));
+            $table->add_header([], $this->gettext("service"));
+            $table->add_header([], $this->gettext("src_ip"));
+            $table->add_header([], $this->gettext("src_rdns"));
+            $table->add_header([], $this->gettext("src_loc"));
+            $table->add_header([], $this->gettext("src_isp"));
+
+            while ($row = $s->fetch(PDO::FETCH_ASSOC)) {
+                $table->add_row();
+                $table->add(['class' => 'timestamp'], $row['timestamp']);
+                $table->add([], strtoupper($row['service']));
+                $table->add([], $row['src_ip']);
+                $table->add([], $row['src_rdns']);
+                $table->add(['class' => 'nowrap'], $row['src_loc']);
+                $table->add(['class' => 'nowrap'], $row['src_isp']);
+            }
+
+            return $table->show();
+        };
     }
 
     /**
@@ -171,7 +239,8 @@ class imap_apppasswd extends \rcube_plugin
                                     (empty($row['last_used_src_rdns']) || $row['last_used_src_rdns'] == "<>" ? $row['last_used_src_ip'] : $row['last_used_src_rdns']).(empty($row['last_used_src_isp']) ? "" : " (".$row['last_used_src_isp'].")"))).
                         \html::span(['class' => 'apppw_location'], (empty($row['last_used_src_loc']) ? $this->gettext('unknown_location') : $row['last_used_src_loc'])).
                         \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created')." ".$this->format_diff($now->diff($created))).
-                        \html::a(['class' => 'apppw_delete', 'onclick' => 'apppw_remove('.$row['id'].')'], $this->gettext("delete"))
+                \html::a(['class' => 'apppw_delete', 'href' => $this->rc->url(["_action" => "plugin.imap_apppasswd.history", "_pwid" => $row['id']])], $this->gettext("show_full_history")).
+                \html::a(['class' => 'apppw_delete', 'onclick' => 'apppw_remove('.$row['id'].')'], $this->gettext("delete"))
             );
         }
 
