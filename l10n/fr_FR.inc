@@ -33,10 +33,10 @@ $labels['minutes_ago'] = "il y a %s minute(s)";
 $labels['just_now'] = "à l'instant";
 
 $labels['page_allows_password_creation_for_clients'] = <<<EOT
-Cette page permet de créer un mot de passe pour vos clients de messagerie. Après avoir créé un mot de passe, celui-ci 
-s'affichera une fois pour que vous puissiez le taper ou le copier dans l'application. Vous n'êtes ni censé ni tenu de 
-vous souvenir du mot de passe ou d'en prendre note. Si vous souhaitez ajouter un client supplémentaire, il vous suffit 
-de créer un nouveau mot de passe ; vous pouvez en créer autant que vous le souhaitez.
+Cette page permet de créer des mots de passe d'application pour vos clients Mail. Après avoir créé un mot de passe, saisissez-le ou copiez-le dans votre 
+demande de courrier électronique. Le mot de passe ne sera affiché qu'une seule fois. Cependant, vous n'êtes ni censé ni obligé de vous souvenir 
+ou notez le mot de passe. Si vous souhaitez ajouter un client supplémentaire, créez simplement un nouveau mot de passe ; vous pouvez créer comme 
+autant que vous le souhaitez.
 EOT;
 
 $labels['use_the_following_settings'] = "Utilisez les paramètres suivants pour votre application";

@@ -33,10 +33,10 @@ $labels['minutes_ago'] = "vor %s Minute(n)";
 $labels['just_now'] = "gerade Ebend";
 
 $labels['page_allows_password_creation_for_clients'] = <<<EOT
-Auf dieser Seite kannst du anwendungsspezifische Kennwörter für deine E-mail Anwendungen erstellen. Nach der Erstellung
-wird dir dieses Kennwort einmal gezeigt werden so das du es in der Anwendung eingeben oder einfügen kannst. Du musst und
-sollst dir dieses Kennwort nicht merken oder notieren. Wenn du weiteres Kennwort für eine weitere Anwendung benötigst,
-kannst du einfach ein neues erstellen; und das beliebig oft.
+Auf dieser Seite können Sie anwendungsspezifische Kennwörter für ihre E-mail Anwendungen erstellen. Nach der Erstellung
+müssen Sie dieses in der Anwendung eingeben oder einfügen. Das Kennwort wird nur einmal angezeit. Jedoch, müssen und
+sollen Sie sich dieses Kennwort nicht merken oder notieren. Wenn Sie ein weiteres Kennwort für eine weitere Anwendung benötigen,
+können Sie einfach ein neues erstellen; und das beliebig oft.
 EOT;
 
 $labels['use_the_following_settings'] = "Nutze die folgenden Einstellungen für deine Anwendung";

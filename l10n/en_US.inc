@@ -33,9 +33,10 @@ $labels['minutes_ago'] = "%s minute(s) ago";
 $labels['just_now'] = "just now";
 
 $labels['page_allows_password_creation_for_clients'] = <<<EOT
-This page allows to create App Password for your Mail clients. After creating a password, it will shown to once for you 
-to type or copy it to the application. You are neither supposed nor required to remember or take note of the password. 
-If you want to add an additional client, just create a new password; you can create as many as you want.
+This page allows to create App Passwords for your Mail clients. After creating a password, type or copy it into your 
+email application. The password will only be shown once. However, you are neither supposed nor required to remember 
+or take note of the password. If you want to add an additional client, just create a new password; you can create as 
+many as you want.
 EOT;
 
 $labels['use_the_following_settings'] = "Use the following settings for your client";
