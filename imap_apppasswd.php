@@ -80,7 +80,7 @@ class imap_apppasswd extends \rcube_plugin
         $this->include_script("imap_apppasswd.js");
         $pwid = filter_input(INPUT_GET, "_pwid", FILTER_SANITIZE_NUMBER_INT);
         if (!empty($pwid) && is_numeric($pwid)) {
-            $s = $this->db->prepare("SELECT a.*, count(l.pwid) as total FROM app_passwords a LEFT JOIN mail.log l on a.id = l.pwid WHERE a.uid = :uid and a.id = :id;");
+            $s = $this->db->prepare("SELECT a.*, count(l.pwid) as total FROM app_passwords a LEFT JOIN log l on a.id = l.pwid WHERE a.uid = :uid and a.id = :id;");
             $user_name = $this->resolve_username();
 
             $s->bindParam(":uid", $user_name);
