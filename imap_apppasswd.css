@@ -220,6 +220,7 @@
     font-style: italic;
     font-size: small !important;
     margin: 0 auto;
+    text-align: center;
 
 }
 @media (max-width: 600px) {
