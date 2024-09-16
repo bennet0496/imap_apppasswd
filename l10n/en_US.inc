@@ -58,3 +58,4 @@ $labels["src_loc"] = "Access Location";
 $labels["src_isp"] = "Access Service Provider";
 $labels["imap_apppasswd_history_for"] = 'Access history for $password';
 $labels["no_history"] = "No history";
+$labels["history_from_to_of"] = 'Log entries from $from to $to of $count';

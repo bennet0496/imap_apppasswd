@@ -47,3 +47,14 @@ $labels['password_method'] = "Méthode d'authentification";
 
 $labels['imap_setting'] = "Paramètres des messages entrants (IMAP)";
 $labels['smtp_setting'] = "Paramètres des messages sortants (SMTP)";
+
+$labels["show_full_history"] = "Afficher l'historique des accès";
+$labels["timestamp"] = "Horodatage";
+$labels["service"] = "Service";
+$labels["src_ip"] = "Accès IP";
+$labels["src_rdns"] = "Nom d'hôte de l'accès";
+$labels["src_loc"] = "Lieu d'accès";
+$labels["src_isp"] = "Fournisseur d'accès";
+$labels["imap_apppasswd_history_for"] = 'Historique des accès pour $password';
+$labels["no_history"] = "Pas d'entrées dans l'historique";
+$labels["history_from_to_of"] = 'Entrées de logs $from à $to de $count';

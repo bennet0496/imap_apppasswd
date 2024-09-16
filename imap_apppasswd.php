@@ -80,11 +80,11 @@ class imap_apppasswd extends \rcube_plugin
         $this->include_script("imap_apppasswd.js");
         $pwid = filter_input(INPUT_GET, "_pwid", FILTER_SANITIZE_NUMBER_INT);
         if (!empty($pwid) && is_numeric($pwid)) {
-            $s = $this->db->prepare("SELECT * FROM app_passwords WHERE uid = :uid and id = :id;");
+            $s = $this->db->prepare("SELECT a.*, count(l.pwid) as total FROM app_passwords a LEFT JOIN mail.log l on a.id = l.pwid WHERE a.uid = :uid and a.id = :id;");
             $user_name = $this->resolve_username();
 
-            $s->bindValue("uid", $user_name);
-            $s->bindValue("id", $pwid);
+            $s->bindParam(":uid", $user_name);
+            $s->bindParam(":id", $pwid);
             $s->execute();
             if ($s->rowCount() == 1) {
                 $row = $s->fetch(PDO::FETCH_ASSOC);
@@ -94,6 +94,9 @@ class imap_apppasswd extends \rcube_plugin
                 });
                 $this->register_handler('imap_apppasswd.imap_apppasswd.history_title.back', function ($ignore) use ($row) {
                     return $this->rc->url("plugin.imap_apppasswd");
+                });
+                $this->register_handler('imap_apppasswd.history.count', function ($attrib) use ($row) {
+                    return $this->historycount_display($attrib, $row['total']);
                 });
                 $this->rc->output->set_pagetitle($this->gettext(['name' => 'imap_apppasswd_history_for', 'vars' => ['password' => $row['comment']]]));
                 $this->rc->output->send('imap_apppasswd.history');
@@ -108,10 +111,13 @@ class imap_apppasswd extends \rcube_plugin
     function historyhtml(int $id): callable {
         return function ($args) use ($id) {
             $this->log->debug("password ".$id);
-            $offset = intval(filter_input(INPUT_GET, "_offset", FILTER_SANITIZE_NUMBER_INT) ?? 0);
-            $s = $this->db->prepare("SELECT * FROM log WHERE pwid = :id ORDER BY timestamp DESC LIMIT 20;");
-            $s->bindValue("id", $id);
-//            $s->bindValue("offset", $offset);
+            $page = intval(filter_input(INPUT_GET, "_page", FILTER_SANITIZE_NUMBER_INT) ?? 1);
+            $page = max(1, $page);
+            //password ownership is checked in show_history()
+            $s = $this->db->prepare("SELECT * FROM log, (SELECT count(*) as total FROM log WHERE pwid = :id) c WHERE pwid = :id ORDER BY timestamp DESC LIMIT 20 OFFSET :offset;");
+            $s->bindParam(":id", $id, \PDO::PARAM_INT);
+            $offset = ($page - 1) * 20;
+            $s->bindParam(":offset", $offset, \PDO::PARAM_INT);
             $s->execute();
 
             if ($s->rowCount() == 0) {
@@ -127,6 +133,8 @@ class imap_apppasswd extends \rcube_plugin
             $table->add_header([], $this->gettext("src_loc"));
             $table->add_header([], $this->gettext("src_isp"));
 
+            $total = 0;
+
             while ($row = $s->fetch(PDO::FETCH_ASSOC)) {
                 $timestamp = new DateTimeImmutable($row['timestamp'] ?? "01-01-1970 00:00:00.0000", new DateTimeZone("UTC"));
                 $table->add_row();
@@ -136,7 +144,14 @@ class imap_apppasswd extends \rcube_plugin
                 $table->add([], $row['src_rdns']);
                 $table->add(['class' => 'nowrap'], $row['src_loc']);
                 $table->add(['class' => 'nowrap'], $row['src_isp']);
+                $total = $row['total'];
             }
+
+            $maxpages = ceil($total / 20.0);
+
+            $this->rc->output->set_env("pwid", $id);
+            $this->rc->output->set_env("current_page", $page);
+            $this->rc->output->set_env("pagecount", $maxpages);
 
             return $table->show();
         };
@@ -383,5 +398,46 @@ class imap_apppasswd extends \rcube_plugin
 
         return $this->gettext("just_now");
 
+    }
+
+    private function historycount_display($attrib, int $total) : string
+    {
+        if (empty($attrib['id'])) {
+            $attrib['id'] = 'rcmcountdisplay';
+        }
+
+        $this->rc->output->add_gui_object('countdisplay', $attrib['id']);
+
+        $content =  $this->rc->action != 'show' ? $this->get_historycount_text($total) : $this->rc->gettext('loading');
+
+        return html::span($attrib, $content);
+    }
+
+    private function get_historycount_text($count = null, $page = null) : string
+    {
+        if ($page === null) {
+            $page = intval(filter_input(INPUT_GET, "_page", FILTER_SANITIZE_NUMBER_INT) ?? 1);
+            $page = max(1, $page);
+        }
+
+        $page_size = 20;
+        $start_msg = ($page-1) * $page_size + 1;
+        $max       = $count;
+
+        if (!$max) {
+            $out = $this->gettext('no_history');
+        }
+        else {
+            $out = $this->gettext([
+                'name' => 'history_from_to_of',
+                'vars' => [
+                    'from'  => $start_msg,
+                    'to'    => min($max, $start_msg + $page_size - 1),
+                    'count' => $max
+                ]
+            ]);
+        }
+
+        return rcube::Q($out);
     }
 }

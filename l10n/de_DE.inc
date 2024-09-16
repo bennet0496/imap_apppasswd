@@ -57,3 +57,4 @@ $labels["src_loc"] = "Zugriffsort";
 $labels["src_isp"] = "Zugriffsanschlussinhaber";
 $labels["imap_apppasswd_history_for"] = 'Zugriffshistorie für $password';
 $labels["no_history"] = "Keine Zugriffe";
+$labels["history_from_to_of"] = 'Logeinträge $from bis $to von $count';

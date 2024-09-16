@@ -22,6 +22,23 @@
     <div class="apppw-footer" role="doc-credits">
         Information on this page includes, and this feature is powered by GeoLite2 Data created by MaxMind, available from https://www.maxmind.com.
     </div>
+
+    <div class="pagenav menu footer small" role="toolbar" aria-label="<roundcube:label name="arialabellistnav" />">
+        <roundcube:button command="firstpage" type="link" class="firstpage disabled" classAct="firstpage"
+                          title="firstpage" label="first" innerclass="inner" />
+        <roundcube:button command="previouspage" type="link" class="prevpage disabled" classAct="prevpage"
+                          title="previouspage" label="previous" innerclass="inner" />
+
+        <roundcube:object name="plugin.imap_apppasswd.history.count" class="pagenav-text" aria-live="polite" aria-relevant="text" />
+        <input class="form-control" type="text" size="3" disabled title="<roundcube:label name="currpage" />" />
+
+        <roundcube:button command="nextpage" type="link" class="nextpage disabled" classAct="nextpage"
+                          title="nextpage" label="next" innerclass="inner" />
+        <roundcube:button command="lastpage" type="link" class="lastpage disabled" classAct="lastpage"
+                          title="lastpage" label="last" innerclass="inner" />
+    </div>
+
+
 </div>
 
 <roundcube:object name="plugin.footer" />

@@ -140,6 +140,28 @@ rcmail.addEventListener("init", function (ev) {
     // console.log(rcmail, window.rcmail)
     rcmail.register_command("plugin.imap_apppasswd.apppw_add", apppw_add, true)
     rcmail.register_command("plugin.imap_apppasswd.apppw_remove_all", delete_all, true)
+
+    if (rcmail.task === "settings" &&  rcmail.env.action === "plugin.imap_apppasswd.history") {
+        rcmail.set_page_buttons();
+        rcmail.init_pagejumper('.pagenav > input');
+        rcmail.update_pagejumper();
+        rcmail.list_page = function (page) {
+            if (page === 'next')
+                page = this.env.current_page+1;
+            else if (page === 'last')
+                page = this.env.pagecount;
+            else if (page === 'prev' && this.env.current_page > 1)
+                page = this.env.current_page-1;
+            else if (page === 'first' && this.env.current_page > 1)
+                page = 1;
+
+            if (page > 0 && page <= this.env.pagecount) {
+                this.env.current_page = page;
+
+                rcmail.goto_url("plugin.imap_apppasswd.history", {_pwid: rcmail.env.pwid, _page: page})
+            }
+        }
+    }
 })
 
 window.addEventListener("load",function (event) {
