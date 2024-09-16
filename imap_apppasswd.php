@@ -292,7 +292,7 @@ class imap_apppasswd extends \rcube_plugin
     {
         try {
             $rand = random_bytes($this->rc->config->get('imap_apppasswd_length', 16));
-            $salt = base64_encode(random_bytes(16));
+            $salt = random_bytes(16);
         } catch (\Random\RandomException $e) {
             $rand = openssl_random_pseudo_bytes($this->rc->config->get('imap_apppasswd_length', 16));
             $salt = openssl_random_pseudo_bytes(16);
@@ -304,16 +304,31 @@ class imap_apppasswd extends \rcube_plugin
             $i = ord($c);
             $i = $i % (26 + 26 + 10);
 
-            if($i < 10) {
+            if($i < 10) { //0123456789
                 return chr($i + 48);
-            } else if ($i < 36) {
+            } else if ($i < 36) { // A-Z
                 return chr($i - 10 + 65);
-            } else {
+            } else { // a-z
                 return chr($i - 10 - 26 + 97);
             }
         }, str_split($rand))), $this->rc->config->get('imap_apppasswd_chunksize', 4)));
 
-        $hash = "{CRYPT}".crypt($pw, "$6$".$salt);
+        // Map salt to abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./
+        // because python crashes otherwise: ValueError: invalid characters in sha512_crypt salt
+        // https://stackoverflow.com/a/71120618
+        $msalt = implode(array_map(function($c) {
+            $i = ord($c);
+            $i = $i % (26 + 26 + 10 + 2);
+            if($i < 12) { // ./0123456789
+                return chr($i + 46);
+            } else if ($i < 38) { // A-Z
+                return chr($i - 12 + 65);
+            } else { // a-z
+                return chr($i - 12 - 26 + 97);
+            }
+        }, str_split($salt)));
+
+        $hash = "{CRYPT}".crypt($pw, "$6$".$msalt);
         $this->log->debug($hash);
 
         $s = $this->db->prepare("INSERT INTO app_passwords (uid, password, created) VALUES (:uid, :password, UTC_TIMESTAMP());");
