@@ -18,7 +18,8 @@
   "require": {
     "php": ">=8.1",
     "roundcube/plugin-installer": "^0.3",
-    "ext-pdo": "*"
+    "ext-pdo": "*",
+    "ext-openssl": "*"
   },
   "extra": {
     "roundcube": {

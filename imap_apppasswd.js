@@ -20,9 +20,10 @@
  *
  */
 
-function apppw_remove(id) {
+
+function imap_apppasswd_remove(id) {
     const apppw_remove_i = () => {
-        rcmail.http_post("plugin.imap_apppasswd_remove", {'id': id});
+        rcmail.http_post("plugin.imap_apppasswd.remove", {'id': id});
     }
     const name = document.querySelector('[data-apppw-id="' + id +'"] > * > .apppw_title_text').textContent
     rcmail.confirm_dialog(rcmail.gettext("confirm_delete_single", "imap_apppasswd").replace("%password%", name), "delete", apppw_remove_i, {
@@ -30,18 +31,18 @@ function apppw_remove(id) {
     });
 }
 
-function apppw_add() {
-    rcmail.http_post("plugin.imap_apppasswd_add");
+function imap_apppasswd_add() {
+    rcmail.http_post("plugin.imap_apppasswd.add");
 }
 
-function delete_all() {
-    const d = () => rcmail.http_post("plugin.imap_apppasswd_delete_all");
+function imap_apppasswd_delete_all() {
+    const d = () => rcmail.http_post("plugin.imap_apppasswd.delete_all");
     rcmail.confirm_dialog(rcmail.gettext("confirm_delete_all", "imap_apppasswd"), rcmail.gettext("delete_all", "imap_apppasswd"), d, {
         button_class: "delete"
     });
 }
 
-function apppw_edit(id) {
+function imap_apppasswd_rename(id) {
     const elm = document.querySelector('[data-apppw-id="' + id +'"] .apppw_title .apppw_title_text');
     const btn = document.querySelector('[data-apppw-id="' + id +'"] .apppw_title .apppw_title_edit');
 
@@ -56,11 +57,11 @@ function apppw_edit(id) {
     btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>';
     btn.title = window.rcmail.gettext("done", "imap_apppasswd")
     btn.onclick = function () {
-        rcmail.http_post("plugin.imap_apppasswd_rename", {"id": id, "name": box.value});
+        rcmail.http_post("plugin.imap_apppasswd.rename", {"id": id, "name": box.value});
     }
 }
 
-rcmail.addEventListener("plugin.apppw_remove_from_list", function (data){
+rcmail.addEventListener("plugin.imap_apppasswd.remove_from_list", function (data){
     // alert();
     if (data.id === "all") {
         document.querySelectorAll('[data-apppw-id]').forEach((e) => e.remove());
@@ -76,7 +77,7 @@ rcmail.addEventListener("plugin.apppw_remove_from_list", function (data){
     }
 }, true);
 
-rcmail.addEventListener("plugin.apppw_add", function (data) {
+rcmail.addEventListener("plugin.imap_apppasswd.add", function (data) {
     const node = document.querySelector("#new_entry_template").content.cloneNode(true);
     node.querySelector("input.apppw_password").value = data.passwd;
 
@@ -105,15 +106,15 @@ rcmail.addEventListener("plugin.apppw_add", function (data) {
     node.querySelector(".apppw_delete").onclick = function (event) {
         event.target.innerText = rcmail.gettext("delete", "imap_apppasswd");
         document.querySelector("[data-apppw-id=\"" + data.id +"\"] .apppw_content").remove();
-        event.target.onclick = () => apppw_remove(data.id);
+        event.target.onclick = () => imap_apppasswd_remove(data.id);
         //rename apppw_title_box
         const value = document.querySelector("[data-apppw-id=\"" + data.id +"\"] > * > .apppw_title_box").value
-        rcmail.http_post("plugin.imap_apppasswd_rename", {"id": data.id, "name": value});
+        rcmail.http_post("plugin.imap_apppasswd.rename", {"id": data.id, "name": value});
     }
 
     node.querySelector(".apppw_title_edit").onclick = function () {
         const value = document.querySelector("[data-apppw-id=\"" + data.id +"\"] > * > .apppw_title_box").value
-        rcmail.http_post("plugin.imap_apppasswd_rename", {"id": data.id, "name": value});
+        rcmail.http_post("plugin.imap_apppasswd.rename", {"id": data.id, "name": value});
     }
 
     document.getElementById("apppw_list").append(node);
@@ -123,7 +124,7 @@ rcmail.addEventListener("plugin.apppw_add", function (data) {
     }
 });
 
-rcmail.addEventListener("plugin.apppw_renamed", function(data) {
+rcmail.addEventListener("plugin.imap_apppasswd.renamed", function(data) {
     const box = document.querySelector('[data-apppw-id="' + data.id +'"] .apppw_title .apppw_title_box');
     const btn = document.querySelector('[data-apppw-id="' + data.id +'"] .apppw_title .apppw_title_edit');
 
@@ -133,13 +134,13 @@ rcmail.addEventListener("plugin.apppw_renamed", function(data) {
 
     box.replaceWith(span);
     btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>';
-    btn.onclick = () => apppw_edit(data.id);
+    btn.onclick = () => imap_apppasswd_rename(data.id);
 });
 
 rcmail.addEventListener("init", function (ev) {
     // console.log(rcmail, window.rcmail)
-    rcmail.register_command("plugin.imap_apppasswd.apppw_add", apppw_add, true)
-    rcmail.register_command("plugin.imap_apppasswd.apppw_remove_all", delete_all, true)
+    rcmail.register_command("plugin.imap_apppasswd.add", imap_apppasswd_add, true)
+    rcmail.register_command("plugin.imap_apppasswd.remove_all", imap_apppasswd_delete_all, true)
 
     if (rcmail.task === "settings" &&  rcmail.env.action === "plugin.imap_apppasswd.history") {
         rcmail.set_page_buttons();

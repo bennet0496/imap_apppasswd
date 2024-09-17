@@ -63,35 +63,35 @@ namespace bennetcc {
 
         public function trace(...$lines): void
         {
-            if ($this->log_level >= LogLevel::TRACE) {
+            if ($this->log_level->value >= LogLevel::TRACE->value) {
                 $this->log("TRACE", ...$lines);
             }
         }
 
         public function debug(...$lines): void
         {
-            if ($this->log_level >= LogLevel::DEBUG) {
+            if ($this->log_level->value >= LogLevel::DEBUG->value) {
                 $this->log("DEBUG", ...$lines);
             }
         }
 
         public function warn(...$lines): void
         {
-            if ($this->log_level >= LogLevel::WARNING) {
+            if ($this->log_level->value >= LogLevel::WARNING->value) {
                 $this->log("WARN", ...$lines);
             }
         }
 
         public function info(...$lines): void
         {
-            if ($this->log_level >= LogLevel::INFO) {
+            if ($this->log_level->value >= LogLevel::INFO->value) {
                 $this->log("INFO", ...$lines);
             }
         }
 
         public function error(...$lines): void
         {
-            if ($this->log_level >= LogLevel::ERROR) {
+            if ($this->log_level->value >= LogLevel::ERROR->value) {
                 $this->log("ERROR", ...$lines);
             }
         }

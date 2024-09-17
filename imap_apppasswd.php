@@ -23,6 +23,8 @@
 //
 //class_alias('\bennetcc\imap_apppasswd', '\imap_apppasswd');
 
+use bennetcc\Log;
+
 require "util.php";
 require "log.php";
 
@@ -41,16 +43,17 @@ class imap_apppasswd extends \rcube_plugin
     private \rcmail $rc;
     private \PDO $db;
 
-    private \bennetcc\Log $log;
+    private Log $log;
 
     function init(): void
     {
         $this->load_config('config.inc.php.dist');
         $this->load_config();
+
         $this->add_texts('l10n/', true);
         $this->rc = \rcmail::get_instance();
 
-        $this->log = new \bennetcc\Log(IMAP_APPPW_LOG_FILE, IMAP_APPPW_PREFIX, $this->rc->config->get(__('log_level'), \bennetcc\LogLevel::INFO->value));
+        $this->log = new Log(IMAP_APPPW_LOG_FILE, IMAP_APPPW_PREFIX, $this->rc->config->get(__('log_level'), \bennetcc\LogLevel::INFO->value));
 
         if ($this->rc->task == 'settings') {
             $dsn = $this->rc->config->get(__('db_dsn'));
@@ -64,66 +67,337 @@ class imap_apppasswd extends \rcube_plugin
                 return;
             }
 
-            $this->add_hook('settings_actions', [$this, 'settings_actions']);
-            $this->register_action('plugin.imap_apppasswd', [$this, 'show_settings']);
-            $this->register_action('plugin.imap_apppasswd.history', [$this, 'show_history']);
+            $this->add_hook('settings_actions', [$this, 'hook_settings_actions']);
+            $this->register_action('plugin.imap_apppasswd', [$this, 'action_show_settings']);
+            $this->register_action('plugin.imap_apppasswd.history', [$this, 'action_show_history']);
 
-            $this->register_action('plugin.imap_apppasswd_remove', [$this, 'remove_password']);
-            $this->register_action('plugin.imap_apppasswd_delete_all', [$this, 'delete_all']);
-            $this->register_action('plugin.imap_apppasswd_add', [$this, 'add_password']);
-            $this->register_action('plugin.imap_apppasswd_rename', [$this, 'rename_password']);
+            $this->register_action('plugin.imap_apppasswd.remove', [$this, 'action_remove_password']);
+            $this->register_action('plugin.imap_apppasswd.delete_all', [$this, 'action_delete_all']);
+            $this->register_action('plugin.imap_apppasswd.add', [$this, 'action_add_password']);
+            $this->register_action('plugin.imap_apppasswd.rename', [$this, 'action_rename_password']);
+
         }
     }
 
-    public function show_history(): void {
+    /**
+     * Action handler for `plugin.imap_apppasswd`.
+     * Called to render the settings page
+     * @return void
+     */
+    public function action_show_settings(): void
+    {
+        if ($this->rc->output->type != 'html') {
+            // don't run on ajax
+            return;
+        }
+
+        //Object handler for password list
+        $this->register_handler('imap_apppasswd.apppw_list', [$this, 'object_handler_apppw_list']);
+
+        //Object handlers for username in description table
+        $this->register_handler('imap_apppasswd.username',
+            fn ($attrib) => html::quote(rcube_utils::idn_to_utf8($this->resolve_username())));
+
+        $this->register_handler('imap_apppasswd.smtp_username', [$this, 'resolve_username']);
+
+        //Page title
+        $this->rc->output->set_pagetitle($this->gettext('imap_apppasswd'));
+
+        //Include our style and scripts
         $this->include_stylesheet("imap_apppasswd.css");
         $this->include_script("imap_apppasswd.js");
+
+        //send the main settings template
+        $this->rc->output->send('imap_apppasswd.apppasswords');
+    }
+
+    /**
+     * Action handler for `plugin.imap_apppasswd.history`.
+     * Called to start rendering the history page
+     * @return void
+     * @throws Exception
+     */
+    public function action_show_history(): void
+    {
+        if ($this->rc->output->type != 'html') {
+            // don't run on ajax
+            return;
+        }
+        //include our style and scripts
+        $this->include_stylesheet("imap_apppasswd.css");
+        $this->include_script("imap_apppasswd.js");
+        //a valiant effort...
+        $this->rc->output->include_script('list.js');
+
+        //get password id to display the history for
         $pwid = filter_input(INPUT_GET, "_pwid", FILTER_SANITIZE_NUMBER_INT);
         if (!empty($pwid) && is_numeric($pwid)) {
+            //select password info to validate ownership and get counter values
             $s = $this->db->prepare("SELECT a.*, count(l.pwid) as total FROM app_passwords a LEFT JOIN log l on a.id = l.pwid WHERE a.uid = :uid and a.id = :id;");
             $user_name = $this->resolve_username();
 
+            //user must own password
             $s->bindParam(":uid", $user_name);
             $s->bindParam(":id", $pwid);
             $s->execute();
+            //only one or none password should exist
             if ($s->rowCount() == 1) {
                 $row = $s->fetch(PDO::FETCH_ASSOC);
-                $this->register_handler('imap_apppasswd.history', $this->historyhtml($pwid));
-                $this->register_handler('imap_apppasswd.imap_apppasswd.history_title', function ($ignore) use ($row) {
-                    return $this->gettext(['name' => 'imap_apppasswd_history_for', 'vars' => ['password' => $row['comment']]]);
-                });
-                $this->register_handler('imap_apppasswd.imap_apppasswd.history_title.back', function ($ignore) use ($row) {
-                    return $this->rc->url("plugin.imap_apppasswd");
-                });
-                $this->register_handler('imap_apppasswd.history.count', function ($attrib) use ($row) {
-                    return $this->historycount_display($attrib, $row['total']);
-                });
-                $this->rc->output->set_pagetitle($this->gettext(['name' => 'imap_apppasswd_history_for', 'vars' => ['password' => $row['comment']]]));
+                //register the table object handler, actually rendering the history
+                $this->register_handler('imap_apppasswd.history', $this->object_handler_history($pwid));
+
+                //title element
+                $this->register_handler('imap_apppasswd.imap_apppasswd.history_title',
+                    fn($ignore) => $this->gettext(['name' => 'history_for', 'vars' => ['password' => $row['comment']]]));
+                //url for back button
+                $this->register_handler('imap_apppasswd.imap_apppasswd.history_title.back',
+                    fn($ignore) => $this->rc->url("plugin.imap_apppasswd"));
+                //total number of log entries
+                $this->register_handler('imap_apppasswd.history.count',
+                    fn($attrib) => $this->object_handler_history_count($attrib, $row['total']));
+                //tab title
+                $this->rc->output->set_pagetitle(
+                    $this->gettext(['name' => 'history_for', 'vars' => ['password' => $row['comment']]]));
+
+                //send the view
                 $this->rc->output->send('imap_apppasswd.history');
                 return;
+            } elseif ($s->rowCount() > 1) { //there should _never_ be more than one password satisfying the constraint
+                $this->log->error(sprintf("The database is broken! More than one password satisfies 'WHERE a.uid = %s and a.id = %s'.", $user_name, $pwid));
+                rcube::raise_error([
+                    'file'    => __FILE__,
+                    'line'    => __LINE__,
+                    'message' => 'password validation exception',
+                ], true, true); //FATAL error
+                die();
             }
         }
-
+        //user doesn't own the password or the password does not exist. drop them back to password overview.
         $this->rc->output->redirect("plugin.imap_apppasswd");
 
     }
 
-    function historyhtml(int $id): callable {
-        return function ($args) use ($id) {
-            $this->log->debug("password ".$id);
+    /**
+     * Action handler for `plugin.imap_apppasswd_add`
+     * Called from JS via AJAX to create a new password
+     * @return void
+     * @throws Exception
+     */
+    public function action_add_password(): void
+    {
+        if ($this->rc->output->type != 'js') {
+            // only run on ajax
+            return;
+        }
+
+        $desired_len = $this->rc->config->get(__('length'), 16);
+        if  (!is_int($desired_len) || $desired_len < 1) {
+            $this->log->error(sprintf("length must be integer greater than 0, got %d", $desired_len));
+            rcube::raise_error([
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'message' => 'miss-configured plugin '.__CLASS__
+            ], true, true);
+        }
+
+        try { // Draw random bytes, as defined by config
+            $random_bytes = random_bytes($desired_len);
+            $salt = random_bytes(16);
+        } catch (Exception) { // Fallback if entropy is low
+            $random_bytes = openssl_random_pseudo_bytes($desired_len);
+            $salt = openssl_random_pseudo_bytes(16);
+        }
+
+        //random call is broken
+        if ($random_bytes === false || $salt === false || strlen($random_bytes) < $desired_len) {
+            $this->log->error("random_bytes and/or openssl return no random value. Please check your system configuration");
+            rcube::raise_error([
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'message' => 'randomness error'
+            ], true, true);
+        }
+
+        //Map random chars to a-zA-Z0-9
+        //TODO: we might want to consider excluding vowels to prevent accidental generation of words or even slurs
+        $password = implode("-", str_split(implode(array_map(function (#[\SensitiveParameter] $c) {
+            $i = ord($c);
+            //$i = $i % (26 + 26 + 10);
+            //map value for even probability. mod would be easier, but may skews the probability if
+            //256 mod |alphabet| != 0
+            $i = intval(round($i / ((2.0 ** 8.0) / floatval(26 + 26 + 10))));
+
+            $this->log->trace(sprintf('password mapper: ord($c)=%d, floatval(26 + 26 + 10)=%f, ((2.0 ** 8.0) / floatval(26 + 26 + 10))=%f, mapped_raw=%f, mapped=%d',
+                ord($c), floatval(26 + 26 + 10), ((2.0 ** 8.0) / floatval(26 + 26 + 10)), ord($c) / ((2.0 ** 8.0) / floatval(26 + 26 + 10)), $i));
+
+            if ($i < 10) { //0123456789 (ASCII 48-57)
+                return chr($i + ord('0'));
+            } else if ($i < 36) { // A-Z (ASCII 65-90)
+                return chr($i - 10 + ord('A'));
+            } else { // a-z (ASCII 97-122)
+                return chr($i - 10 - 26 + ord('a'));
+            }
+        }, str_split($random_bytes))), $this->rc->config->get(__('chunksize'), 4)));
+
+        // Map salt to abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./
+        // because python crashes otherwise: ValueError: invalid characters in sha512_crypt salt
+        // https://stackoverflow.com/a/71120618
+        $mapped_salt = implode(array_map(function (#[\SensitiveParameter] $c) {
+            $i = ord($c);
+            //$i = $i % (26 + 26 + 10 + 2);
+            //map value for even probability. mod would be easier, but may skews the probability if
+            //256 mod |alphabet| != 0
+            $i = intval(round($i / ((2.0 ** 8.0) / floatval(26 + 26 + 10 + 2))));
+
+            if ($i < 12) { // ./0123456789 (ASCII 46-57)
+                return chr($i + ord('.'));
+            } else if ($i < 38) { // A-Z (ASCII 65-90)
+                return chr($i - 12 + ord('A'));
+            } else { // a-z (ASCII 97-122)
+                return chr($i - 12 - 26 + ord('a'));
+            }
+        }, str_split($salt)));
+
+        //hash with SHA512 and default settings
+        $hash = "{CRYPT}" . crypt($password, "$6$" . $mapped_salt);
+        $this->log->debug($hash);
+
+        //insert without name
+        $s = $this->db->prepare("INSERT INTO app_passwords (uid, password, created) VALUES (:uid, :password, UTC_TIMESTAMP());");
+
+        $s->bindValue("uid", $this->resolve_username());
+        $s->bindValue("password", $hash);
+
+        if ($s->execute()) {
+            $this->rc->output->command("plugin.imap_apppasswd.add", ["id" => $this->db->lastInsertId(), "passwd" => $password]);
+        } else {
+            $this->rc->output->show_message($this->gettext("apppw_add_error"), "error");
+        }
+
+        $this->log->info($this->rc->user->get_username() . " added an app password");
+
+    }
+
+    /**
+     * Action handler for `plugin.imap_apppasswd.rename`
+     * Called from JS via AJAX to edit the name/comment
+     * @return void
+     */
+    public function action_rename_password(): void
+    {
+        if ($this->rc->output->type != 'js') {
+            // only run on ajax
+            return;
+        }
+
+        //stripe HTML tag to prevent XSS
+        $name = strip_tags(filter_input(INPUT_POST, 'name'));
+        $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
+        // We need uid here to protect from users renaming each others passwords
+        $s = $this->db->prepare("UPDATE app_passwords SET comment = :comment WHERE id = :id AND uid = :uid;");
+        $s->bindValue("comment", $name);
+        $s->bindValue("id", $id, \PDO::PARAM_INT);
+        $s->bindValue("uid", $this->resolve_username());
+
+        if ($s->execute()) {
+            $this->rc->output->command("plugin.imap_apppasswd.renamed", ["id" => $id, "name" => $name]);
+        } else {
+            $this->rc->output->show_message($this->gettext("apppw_rename_error"), "error");
+        }
+
+        $this->log->info($this->rc->user->get_username() . " renamed app password " . $id . " to " . $name);
+    }
+
+    /**
+     * Action handler for `plugin.imap_apppasswd.remove`
+     * Called from JS via AJAX to delete a password
+     * @param mixed|null $attr
+     * @return void
+     */
+    public function action_remove_password(): void
+    {
+        if ($this->rc->output->type != 'js') {
+            // only run on ajax
+            return;
+        }
+
+        $this->log->debug($_REQUEST);
+        $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
+
+        // We need uid here to protect from users delete each others passwords
+        $s = $this->db->prepare("DELETE FROM app_passwords WHERE id = :id AND uid = :uid;");
+
+        $s->bindValue("id", $id, \PDO::PARAM_INT);
+        $s->bindValue("uid", $this->resolve_username());
+
+        if ($s->execute()) {
+            $this->rc->output->command("plugin.apppw_remove_from_list", ["id" => $id]);
+            $this->rc->output->show_message($this->gettext("apppw_deleted_success"));
+        } else {
+            $this->rc->output->show_message($this->gettext("apppw_deleted_error"), "error");
+        }
+
+        $this->log->info($this->rc->user->get_username() . " deleted app password " . $id);
+    }
+
+    /**
+     * Action handler for `plugin.imap_apppasswd.delete_all`
+     * Called from JS via AJAX to delete all passwords
+     * @param mixed|null $attr
+     * @return void
+     */
+    public function action_delete_all(): void
+    {
+        $this->log->debug($_REQUEST);
+
+        // We need uid here to protect from users delete each others passwords
+        $s = $this->db->prepare("DELETE FROM app_passwords WHERE uid = :uid;");
+
+        $s->bindValue("uid", $this->resolve_username());
+
+        if ($s->execute()) {
+            $this->rc->output->command("plugin.imap_apppasswd.remove_from_list", ["id" => "all"]);
+            $this->rc->output->show_message($this->gettext("apppw_deleted_success"));
+        } else {
+            $this->rc->output->show_message($this->gettext("apppw_deleted_error"), "error");
+        }
+
+        $this->log->info($this->rc->user->get_username() . " deleted all app passwords");
+    }
+
+    /**
+     * Indirect object handler for the history GUI object, rendering the actual history table
+     * @param int $id ID of the password to render
+     * @return callable callback for rendering
+     */
+    function object_handler_history(int $id): callable
+    {
+        /**
+         * The actual callback for `imap_apppasswd.history` using the ID we need
+         * @param never $ignore ignored
+         * @return string  HTML string of history table
+         * @throws PDOException
+         * @throws DateMalformedStringException
+         */
+        return function ($ignore) use ($id) {
+            $this->log->debug("password " . $id);
+            //get page number and clamp to 0 < $page < INT_MAX
             $page = intval(filter_input(INPUT_GET, "_page", FILTER_SANITIZE_NUMBER_INT) ?? 1);
             $page = max(1, $page);
             //password ownership is checked in show_history()
             $s = $this->db->prepare("SELECT * FROM log, (SELECT count(*) as total FROM log WHERE pwid = :id) c WHERE pwid = :id ORDER BY timestamp DESC LIMIT 20 OFFSET :offset;");
             $s->bindParam(":id", $id, \PDO::PARAM_INT);
+            //page size is hardcoded to 20
             $offset = ($page - 1) * 20;
             $s->bindParam(":offset", $offset, \PDO::PARAM_INT);
             $s->execute();
 
+            //no logs yet or page number to high
             if ($s->rowCount() == 0) {
                 return \html::span(["class" => "my-5 block w-100 h-100 block text-center"], $this->gettext("no_history"));
             }
 
+            //Table head
             $table = new \html_table(["class" => "w-100"]);
             $table->add_row();
             $table->add_header([], $this->gettext("timestamp"));
@@ -133,9 +407,13 @@ class imap_apppasswd extends \rcube_plugin
             $table->add_header([], $this->gettext("src_loc"));
             $table->add_header([], $this->gettext("src_isp"));
 
+            //value is assigned on each row, even though it's the
+            //same on every row. But we don't have `$row` after the
+            //loop anymore
             $total = 0;
 
             while ($row = $s->fetch(PDO::FETCH_ASSOC)) {
+                //time is always UTC. JS on the client translates it to the user timezone
                 $timestamp = new DateTimeImmutable($row['timestamp'] ?? "01-01-1970 00:00:00.0000", new DateTimeZone("UTC"));
                 $table->add_row();
                 $table->add(['class' => 'timestamp'], $timestamp->format(DATE_RFC822));
@@ -144,11 +422,12 @@ class imap_apppasswd extends \rcube_plugin
                 $table->add([], $row['src_rdns']);
                 $table->add(['class' => 'nowrap'], $row['src_loc']);
                 $table->add(['class' => 'nowrap'], $row['src_isp']);
-                $total = $row['total'];
+                $total = $row['total']; //hack from above
             }
 
             $maxpages = ceil($total / 20.0);
 
+            //values for rendering the paginator
             $this->rc->output->set_env("pwid", $id);
             $this->rc->output->set_env("current_page", $page);
             $this->rc->output->set_env("pagecount", $maxpages);
@@ -158,81 +437,21 @@ class imap_apppasswd extends \rcube_plugin
     }
 
     /**
-     * Add a tab to Settings.
-     */
-    public function settings_actions($args): array
-    {
-        $args['actions'][] = [
-            'action' => 'plugin.imap_apppasswd',
-            'class'  => 'imap_apppasswd',
-            'label'  => 'imap_apppasswd',
-            'domain' => 'imap_apppasswd',
-        ];
-
-        return $args;
-    }
-
-    public function show_settings(): void
-    {
-        $this->register_handler('imap_apppasswd.apppw_list', [$this, 'apppw_listhtml']);
-        $this->register_handler('imap_apppasswd.username', function ($attrib) {
-            return html::quote(rcube_utils::idn_to_utf8($this->resolve_username()));
-        });
-        $this->register_handler('imap_apppasswd.smtp_username', [$this, 'resolve_username']);
-
-        $this->rc->output->set_pagetitle($this->gettext('imap_apppasswd'));
-
-        $this->include_stylesheet("imap_apppasswd.css");
-        $this->include_script("imap_apppasswd.js");
-
-        $this->rc->output->send('imap_apppasswd.apppasswords');
-    }
-
-    /**
-     * Helper to resolve Roundcube username (email) to Nextcloud username
-     *
-     * Returns resolved name.
-     *
-     * @param $user string The username
-     * @return string
-     */
-    private function resolve_username(string $user = ""): string
-    {
-        $this->log->trace("user: ".$user);
-
-        if (empty($user)) {
-            // verbatim roundcube username
-            $user = $this->rc->user->get_username();
-        }
-
-        $this->log->trace("user: ".$user);
-
-        $username_tmpl = $this->rc->config->get(__("username"));
-
-        $mail = $this->rc->user->get_username("mail");
-        $mail_local = $this->rc->user->get_username("local");
-        $mail_domain = $this->rc->user->get_username("domain");
-
-        $imap_user = empty($_SESSION['username']) ? $mail_local : $_SESSION['username'];
-
-        $this->log->trace($username_tmpl,$mail,$mail_local,$mail_domain,$imap_user);
-
-        return str_replace(["%s", "%i", "%e", "%l", "%u", "%d", "%h"],
-            [$user, $imap_user, $mail, $mail_local, $mail_local, $mail_domain, $_SESSION['storage_host'] ?? ""],
-            $username_tmpl);
-    }
-
-    /**
      * List of passwords in the Settings tab content.
+     * @return string HTML List
+     * @throws DateMalformedStringException
      */
-    public function apppw_listhtml(): string {
+    public function object_handler_apppw_list(): string
+    {
+        //get app password for user
         $s = $this->db->prepare("SELECT * FROM app_passwords_with_log WHERE uid = :uid;");
         $user_name = $this->resolve_username();
 
         $s->bindValue("uid", $user_name);
         $s->execute();
 
-        $html = \html::span(['class' => 'no_passwords '.($s->rowCount() == 0 ? '' : 'hidden')],$this->gettext('no_passwords'));
+        //add and optionally show the 'no_password' element
+        $html = \html::span(['class' => 'no_passwords ' . ($s->rowCount() == 0 ? '' : 'hidden')], $this->gettext('no_passwords'));
 
         while ($row = $s->fetch(\PDO::FETCH_ASSOC)) {
             $this->log->trace($row);
@@ -243,164 +462,35 @@ class imap_apppasswd extends \rcube_plugin
 
             $this->log->trace($now, $last_used, $created);
 
+            //ugly but it works...
             $html .= \html::div(['class' => 'apppw_entry', 'data-apppw-id' => $row['id']],
                 \html::span(['class' => 'apppw_title'],
-                    \html::span(['class' => 'apppw_title_text'], ($row['comment'] ?? $this->gettext('unnamed_app'))).
-                            \html::a(['class' => 'apppw_title_edit', 'title' => $this->gettext('edit'), 'onclick' => 'apppw_edit('.$row['id'].')'], IMAP_APPPW_EDIT_BTN)).
-                        \html::span(['class' => 'apppw_lastused', 'title' => $row['last_used_timestamp'] == null ? $this->gettext('never_used') : $last_used->format(DATE_RFC822)],
-                            $row['last_used_timestamp'] == null ?
-                            $this->gettext('never_used') :
-                            $this->gettext('last_used')." ".$this->format_diff($now->diff($last_used))." ".$this->gettext('last_used_from')." ".
-                                \html::span(['title' => $row['src_ip'] ?? ""],
-                                    (empty($row['last_used_src_rdns']) || $row['last_used_src_rdns'] == "<>" ? $row['last_used_src_ip'] : $row['last_used_src_rdns']).(empty($row['last_used_src_isp']) ? "" : " (".$row['last_used_src_isp'].")"))).
-                        \html::span(['class' => 'apppw_location'], (empty($row['last_used_src_loc']) ? $this->gettext('unknown_location') : $row['last_used_src_loc'])).
-                        \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created')." ".$this->format_diff($now->diff($created))).
-                \html::a(['class' => 'apppw_delete', 'href' => $this->rc->url(["_action" => "plugin.imap_apppasswd.history", "_pwid" => $row['id']])], $this->gettext("show_full_history")).
-                \html::a(['class' => 'apppw_delete', 'onclick' => 'apppw_remove('.$row['id'].')'], $this->gettext("delete"))
+                    \html::span(['class' => 'apppw_title_text'], ($row['comment'] ?? $this->gettext('unnamed_app'))) .
+                    \html::a(['class' => 'apppw_title_edit', 'title' => $this->gettext('edit'), 'onclick' => 'apppw_edit(' . $row['id'] . ')'], IMAP_APPPW_EDIT_BTN)) .
+                \html::span(['class' => 'apppw_lastused', 'title' => $row['last_used_timestamp'] == null ? $this->gettext('never_used') : $last_used->format(DATE_RFC822)],
+                    $row['last_used_timestamp'] == null ?
+                        $this->gettext('never_used') :
+                        $this->gettext('last_used') . " " . $this->format_diff($now->diff($last_used)) . " " . $this->gettext('last_used_from') . " " .
+                        \html::span(['title' => $row['src_ip'] ?? ""],
+                            (empty($row['last_used_src_rdns']) || $row['last_used_src_rdns'] == "<>" ? $row['last_used_src_ip'] : $row['last_used_src_rdns']) . (empty($row['last_used_src_isp']) ? "" : " (" . $row['last_used_src_isp'] . ")"))) .
+                \html::span(['class' => 'apppw_location'], (empty($row['last_used_src_loc']) ? $this->gettext('unknown_location') : $row['last_used_src_loc'])) .
+                \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created') . " " . $this->format_diff($now->diff($created))) .
+                \html::a(['class' => 'apppw_delete', 'href' => $this->rc->url(["_action" => "plugin.imap_apppasswd.history", "_pwid" => $row['id']])], $this->gettext("show_full_history")) .
+                \html::a(['class' => 'apppw_delete', 'onclick' => 'apppw_remove(' . $row['id'] . ')'], $this->gettext("delete"))
             );
         }
 
         return $html;
     }
 
-    public function remove_password(mixed $attr = null) : void
-    {
-        $this->log->debug($attr,$_REQUEST);
-        $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
-
-        // We need uid here to protect from users delete each others passwords
-        $s = $this->db->prepare("DELETE FROM app_passwords WHERE id = :id AND uid = :uid;");
-
-        $s->bindValue("id", $id, \PDO::PARAM_INT);
-        $s->bindValue("uid", $this->resolve_username());
-
-        if($s->execute()) {
-            $this->rc->output->command("plugin.apppw_remove_from_list", ["id" => $_REQUEST['id']]);
-            $this->rc->output->show_message($this->gettext("apppw_deleted_success"));
-        } else {
-            $this->rc->output->show_message($this->gettext("apppw_deleted_error"), "error");
-        }
-
-        $this->log->info($this->rc->user->get_username()." deleted app password ".$id);
-    }
-
-    public function delete_all(mixed $attr = null) : void
-    {
-        $this->log->debug($attr,$_REQUEST);
-
-        // We need uid here to protect from users delete each others passwords
-        $s = $this->db->prepare("DELETE FROM app_passwords WHERE uid = :uid;");
-
-        $s->bindValue("uid", $this->resolve_username());
-
-        if($s->execute()) {
-            $this->rc->output->command("plugin.apppw_remove_from_list", ["id" => "all"]);
-            $this->rc->output->show_message($this->gettext("apppw_deleted_success"));
-        } else {
-            $this->rc->output->show_message($this->gettext("apppw_deleted_error"), "error");
-        }
-
-        $this->log->info($this->rc->user->get_username()." deleted all app passwords");
-    }
-
-    public function add_password() : void
-    {
-        try {
-            $rand = random_bytes($this->rc->config->get('imap_apppasswd_length', 16));
-            $salt = random_bytes(16);
-        } catch (\Random\RandomException $e) {
-            $rand = openssl_random_pseudo_bytes($this->rc->config->get('imap_apppasswd_length', 16));
-            $salt = openssl_random_pseudo_bytes(16);
-        }
-
-        //Map random chars to a-zA-Z0-9
-        //TODO: we might want to consider excluding vowels to prevent accidental generation of words or even slurs
-        $pw = implode("-", str_split(implode(array_map(function($c) {
-            $i = ord($c);
-            $i = $i % (26 + 26 + 10);
-
-            if($i < 10) { //0123456789
-                return chr($i + 48);
-            } else if ($i < 36) { // A-Z
-                return chr($i - 10 + 65);
-            } else { // a-z
-                return chr($i - 10 - 26 + 97);
-            }
-        }, str_split($rand))), $this->rc->config->get('imap_apppasswd_chunksize', 4)));
-
-        // Map salt to abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./
-        // because python crashes otherwise: ValueError: invalid characters in sha512_crypt salt
-        // https://stackoverflow.com/a/71120618
-        $msalt = implode(array_map(function($c) {
-            $i = ord($c);
-            $i = $i % (26 + 26 + 10 + 2);
-            if($i < 12) { // ./0123456789
-                return chr($i + 46);
-            } else if ($i < 38) { // A-Z
-                return chr($i - 12 + 65);
-            } else { // a-z
-                return chr($i - 12 - 26 + 97);
-            }
-        }, str_split($salt)));
-
-        $hash = "{CRYPT}".crypt($pw, "$6$".$msalt);
-        $this->log->debug($hash);
-
-        $s = $this->db->prepare("INSERT INTO app_passwords (uid, password, created) VALUES (:uid, :password, UTC_TIMESTAMP());");
-
-        $s->bindValue("uid", $this->resolve_username());
-        $s->bindValue("password", $hash);
-
-        if($s->execute()) {
-            $this->rc->output->command("plugin.apppw_add", ["id" => $this->db->lastInsertId(),"passwd" => $pw]);
-        } else {
-            $this->rc->output->show_message($this->gettext("apppw_add_error"), "error");
-        }
-
-        $this->log->info($this->rc->user->get_username()." added an app password");
-
-    }
-
-    public function rename_password() : void
-    {
-        $name = strip_tags($_REQUEST['name']);
-        $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
-        // We need uid here to protect from users renaming each others passwords
-        $s = $this->db->prepare("UPDATE app_passwords SET comment = :comment WHERE id = :id AND uid = :uid;");
-        $s->bindValue("comment", $name);
-        $s->bindValue("id", $id, \PDO::PARAM_INT);
-        $s->bindValue("uid", $this->resolve_username());
-
-        if($s->execute()) {
-            $this->rc->output->command("plugin.apppw_renamed", ["id" => $id, "name" => $name]);
-        } else {
-            $this->rc->output->show_message($this->gettext("apppw_rename_error"), "error");
-        }
-
-        $this->log->info($this->rc->user->get_username()." renamed app password ".$id." to ".$name);
-    }
-    private function format_diff(DateInterval $diff) : string {
-        if($diff->format("%y") != "0") {
-            return sprintf($this->gettext("years_ago"), $diff->format("%y"));
-        }
-        if($diff->format("%m") != "0") {
-            return sprintf($this->gettext("months_ago"), $diff->format("%m"));
-        }
-        if($diff->format("%d") != "0") {
-            return sprintf($this->gettext("days_ago"), $diff->format("%d"));
-        }
-        if($diff->format("%h") != "0") {
-            return sprintf($this->gettext("hours_ago"), $diff->format("%h"));
-        }
-        if($diff->format("%i") != "0") {
-            return sprintf($this->gettext("minutes_ago"), $diff->format("%i"));
-        }
-
-        return $this->gettext("just_now");
-
-    }
-
-    private function historycount_display($attrib, int $total) : string
+    /**
+     * Object handler for the history entry counter in the paginator
+     * strongly inspired by the massages pagination of RC itself
+     * @param mixed $attrib RC stuff
+     * @param int $total total number of entries
+     * @return string HTML text
+     */
+    private function object_handler_history_count($attrib, int $total): string
     {
         if (empty($attrib['id'])) {
             $attrib['id'] = 'rcmcountdisplay';
@@ -408,12 +498,94 @@ class imap_apppasswd extends \rcube_plugin
 
         $this->rc->output->add_gui_object('countdisplay', $attrib['id']);
 
-        $content =  $this->rc->action != 'show' ? $this->get_historycount_text($total) : $this->rc->gettext('loading');
+        $content = $this->rc->action != 'show' ? $this->historycount_text($total) : $this->rc->gettext('loading');
 
         return html::span($attrib, $content);
     }
 
-    private function get_historycount_text($count = null, $page = null) : string
+    /**
+     * Add a tab to Settings.
+     */
+    public function hook_settings_actions($args): array
+    {
+        $args['actions'][] = [
+            'action' => 'plugin.imap_apppasswd',
+            'class' => 'imap_apppasswd',
+            'label' => 'imap_apppasswd',
+            'domain' => 'imap_apppasswd',
+        ];
+
+        return $args;
+    }
+
+    /**
+     * Helper to resolve Roundcube username (email) to IMAP username
+     *
+     * Returns resolved name.
+     *
+     * @param $user string The username
+     * @return string
+     */
+    private function resolve_username(string $user = ""): string
+    {
+        $this->log->trace("user: " . $user);
+
+        if (empty($user)) {
+            // verbatim roundcube username
+            $user = $this->rc->user->get_username();
+        }
+
+        $this->log->trace("user: " . $user);
+
+        $username_tmpl = $this->rc->config->get(__("username"));
+
+        $mail = $this->rc->user->get_username("mail");
+        $mail_local = $this->rc->user->get_username("local");
+        $mail_domain = $this->rc->user->get_username("domain");
+
+        $imap_user = empty($_SESSION['username']) ? $mail_local : $_SESSION['username'];
+
+        $this->log->trace($username_tmpl, $mail, $mail_local, $mail_domain, $imap_user);
+
+        return str_replace(["%s", "%i", "%e", "%l", "%u", "%d", "%h"],
+            [$user, $imap_user, $mail, $mail_local, $mail_local, $mail_domain, $_SESSION['storage_host'] ?? ""],
+            $username_tmpl);
+    }
+
+    /**
+     * Format a DateInternal as human-readable string like "n days ago"
+     * @param DateInterval $diff
+     * @return string
+     */
+    private function format_diff(DateInterval $diff): string
+    {
+        if ($diff->format("%y") != "0") {
+            return sprintf($this->gettext("years_ago"), $diff->format("%y"));
+        }
+        if ($diff->format("%m") != "0") {
+            return sprintf($this->gettext("months_ago"), $diff->format("%m"));
+        }
+        if ($diff->format("%d") != "0") {
+            return sprintf($this->gettext("days_ago"), $diff->format("%d"));
+        }
+        if ($diff->format("%h") != "0") {
+            return sprintf($this->gettext("hours_ago"), $diff->format("%h"));
+        }
+        if ($diff->format("%i") != "0") {
+            return sprintf($this->gettext("minutes_ago"), $diff->format("%i"));
+        }
+
+        return $this->gettext("just_now");
+
+    }
+
+    /**
+     * Utility function for {@link self::object_handler_history_count}
+     * @param int|null $count number of pages
+     * @param int|null $page current page
+     * @return string text
+     */
+    private function historycount_text(int|null $count = null, int|null $page = null): string
     {
         if ($page === null) {
             $page = intval(filter_input(INPUT_GET, "_page", FILTER_SANITIZE_NUMBER_INT) ?? 1);
@@ -421,18 +593,17 @@ class imap_apppasswd extends \rcube_plugin
         }
 
         $page_size = 20;
-        $start_msg = ($page-1) * $page_size + 1;
-        $max       = $count;
+        $start_msg = ($page - 1) * $page_size + 1;
+        $max = $count;
 
         if (!$max) {
             $out = $this->gettext('no_history');
-        }
-        else {
+        } else {
             $out = $this->gettext([
                 'name' => 'history_from_to_of',
                 'vars' => [
-                    'from'  => $start_msg,
-                    'to'    => min($max, $start_msg + $page_size - 1),
+                    'from' => $start_msg,
+                    'to' => min($max, $start_msg + $page_size - 1),
                     'count' => $max
                 ]
             ]);

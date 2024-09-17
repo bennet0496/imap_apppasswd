@@ -1,3 +1,41 @@
+#layout {
+    background-color: inherit !important;
+}
+
+#layout > div > .header-apppw {
+    border-bottom: 1px solid #d4dbde;
+    color: #2c363a;
+    background-color: #f4f4f4;
+}
+
+#layout > div > .header-apppw {
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 58px;
+    height: 58px;
+    min-height: 58px;
+    padding: 0 0.25em;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    justify-content: space-between;
+}
+
+#layout-content {
+    overflow-y: scroll;
+    background-color: inherit !important;
+}
+
+#layout-content .header {
+    /*background-color: inherit !important;*/
+    position: fixed !important;
+    top: 0;
+    width: 100%;
+    z-index: 10;
+}
+
 .apppw {
     display: block;
     width: fit-content;
@@ -14,23 +52,6 @@
 .apppw_container_flexroot {
     display: flex;
     width: 100%;
-}
-
-#layout {
-    background-color: inherit !important;
-}
-
-#layout-content {
-    overflow-y: scroll;
-    background-color: inherit !important;
-}
-
-#layout-content .header {
-    /*background-color: inherit !important;*/
-    position: fixed !important;
-    top: 0;
-    width: 100%;
-    z-index: 10;
 }
 
 .apppw *:focus {
@@ -132,52 +153,6 @@
     padding: 0.75rem 1rem;
 }
 
-.dark-mode{
-    #layout-content .header {
-        background-color: inherit !important;
-    }
-
-    .apppw_title_box {
-        background: rgba(255,255,255,0.1);
-        border: none;
-        border-bottom: 3px solid darkgrey;
-        color: white;
-    }
-
-    .apppw_title_edit svg {
-        filter: invert(0.9);
-    }
-
-    .apppw_content {
-        background: rgba(255,255,255,0.2);
-        border: none;
-        border-bottom: 3px solid rgba(255,255,255,0.8);
-        border-radius: 2px;
-        padding: .4em 1em;
-        font-stretch: 130%;
-        color: darkgray !important;
-        width: fit-content;
-    }
-
-    .apppw_content input {
-        color: darkgray !important;
-    }
-
-    .apppw_content_action svg {
-        filter: invert(.9);
-    }
-
-    #layout > div > .header-apppw {
-        border-color: #4d6066;
-        color: rgb(197, 209, 211);
-        background-color: transparent;
-    }
-}
-
-.nowrap {
-    white-space: nowrap !important;
-}
-
 .apppw_info {
     /*margin: calc(58px + 1rem) 1rem 1rem 1rem;*/
     margin: 1rem 1rem 1rem 1rem;
@@ -223,6 +198,16 @@
     text-align: center;
 
 }
+
+.block {
+    display: block;
+}
+
+.nowrap {
+    white-space: nowrap !important;
+}
+
+/* SMALL DEVICES */
 @media (max-width: 600px) {
     .apppw_info .table tr > :first-child {
         display: none;
@@ -266,27 +251,43 @@
     }
 }
 
-#layout > div > .header-apppw {
-    border-bottom: 1px solid #d4dbde;
-    color: #2c363a;
-    background-color: #f4f4f4;
+/* DARK MODE */
+.dark-mode #layout-content .header {
+    background-color: inherit !important;
 }
 
-#layout > div > .header-apppw {
-    font-size: 1rem;
-    font-weight: bold;
-    line-height: 58px;
-    height: 58px;
-    min-height: 58px;
-    padding: 0 0.25em;
-    margin: 0;
-    position: relative;
-    overflow: hidden;
-    white-space: nowrap;
-    display: flex;
-    justify-content: space-between;
+.dark-mode .apppw_title_box {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-bottom: 3px solid darkgrey;
+    color: white;
 }
 
-.block {
-    display: block;
+.dark-mode .apppw_title_edit svg {
+    filter: invert(0.9);
+}
+
+.dark-mode .apppw_content {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    border-bottom: 3px solid rgba(255,255,255,0.8);
+    border-radius: 2px;
+    padding: .4em 1em;
+    font-stretch: 130%;
+    color: darkgray !important;
+    width: fit-content;
+}
+
+.dark-mode .apppw_content input {
+    color: darkgray !important;
+}
+
+.dark-mode .apppw_content_action svg {
+    filter: invert(.9);
+}
+
+.dark-mode #layout > div > .header-apppw {
+    border-color: #4d6066;
+    color: rgb(197, 209, 211);
+    background-color: transparent;
 }

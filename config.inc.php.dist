@@ -21,16 +21,36 @@
  *
  */
 
-
+// Database connection information
+// DSN has to be PDO compatible
+// see: https://www.php.net/manual/en/pdo.drivers.php
 $config['imap_apppasswd_db_dsn'] = "mysql:host=127.0.0.1;dbname=mail_auth";
 $config['imap_apppasswd_db_username'] = "roundcube";
 $config['imap_apppasswd_db_password'] = "password";
 
+// The length of the passwords to be generated, i.e. the number of random bytes.
+// For better readablity the password can also be chunked with a dash as delimiter.
+// In this case the total length increases by `chunksize-1` characters.
+// `length` needs to be a whole multiple of `chunksize`.
+// If no chunking is desired, set `chunksize` equal to `length`
 $config['imap_apppasswd_length'] = 16;
 $config['imap_apppasswd_chunksize'] = 4;
 
+// Used for displaying the username on the setup page, as well as the uid field in the database
+// causing the mail server to match against this value. This means for example even if either
+// the full email or just username (localpart) work, but the mailserver normalizes it to just
+// the localpart, than the localpart should be specified here (or vice versa)
+// Template string with following placeholders
+// "%s" => Roundcube user as is (rcmail::user->get_username()), which is usually the full email
+// "%i" => IMAP User, used be roundcube ($_SESSION['username'])
+// "%e" => The full email as determined by roundcube
+// "%l" => The email localpart as determined by roundcube
+// "%u" => same as "%l"
+// "%d" => Email domain, as determined by roundcube
+// "%h" => Storage/IMAP host
 $config['imap_apppasswd_username'] = "%u";
 
+// Information to display to the user
 $config['imap_apppasswd_advertised_client_imap_host'] = "imap.example.com";
 $config['imap_apppasswd_advertised_client_smtp_host'] = "smtp.example.com";
 $config['imap_apppasswd_advertised_client_imap_port'] = "993";

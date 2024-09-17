@@ -26,15 +26,7 @@ where they were last used and delete them if not needed any more.
 However, this plugin also requires you Dovecot (and SMTP Server [eg. Exim, Postfix])
 to be set up a certain way. 
 
-
-## Setup your mail server (the old way)
-<details>
-You will need the following to be installed on you mail server
-```bash
-apt install dovecot-mysql geoip-database geoipupdate
-```
-
-### Prepare the database
+## Prepare the database
 For the database, you can use any host you'd like to hold the data. This host
 will need to have mariadb (or mysql) installed
 ```bash
@@ -44,16 +36,33 @@ apt install mariadb-server
 Then create the database, users e.g. with
 ```bash
 mysql <<EOF
-CREATE DATABASE mail;
-GRANT ALL ON mail.* TO `dovecot`@`localhost` IDENTIFIED VIA unix_socket;
-GRANT ALL ON mail.* TO `mailserver`@`localhost` IDENTIFIED BY 'password123';
-GRANT ALL ON mail.* TO `roundcube`@`%` IDENTIFIED BY 'password123';
+CREATE DATABASE mail_auth;
+GRANT USAGE ON *.* TO `mailserver`@`localhost` IDENTIFIED BY 'password123';
+GRANT USAGE ON *.* TO `roundcube`@`webmail.example.com` IDENTIFIED BY 'password123';
+
+GRANT SELECT ON `mail_auth`.`log` TO `roundcube`@`webmail.example.com`
+GRANT SELECT, SHOW VIEW ON `mail_auth`.`app_passwords_with_log` TO `roundcube`@`webmail.example.com`
+GRANT SELECT, INSERT, UPDATE (`comment`), DELETE ON `mail_auth`.`app_passwords` TO `roundcube`@`webmail.example.com`
+
+GRANT SELECT ON `mail_auth`.`app_passwords` TO `mailserver`@`localhost`
+GRANT SELECT, INSERT ON `mail_auth`.`log` TO `mailserver`@`localhost`
 EOF
 ```
 And the tables from the DDL in `SQL/mysql.sql`. Replace the passwords and host specifiers
-appropriately. Please note that when you are not running the database server on your mail 
-server you will need to create a password for the dovecot use as well or omit them, as the 
-`mailserver` in this case should suffice.
+appropriately.
+
+## Setup the mail server
+
+To set up the mail server, either setup Dovecot web auth from https://gitlab.pks.mpg.de/edv/dovecot-web-auth or
+use the old Postlogin script method below, that may or may not work anymore.
+
+
+## Setup your mail server (the old way)
+<details>
+You will need the following to be installed on you mail server
+```bash
+apt install dovecot-mysql geoip-database geoipupdate
+```
 
 ### Configure Dovecot
 #### Configure the passdb
@@ -171,3 +180,8 @@ as well. And for good measure you might also want to look into firing a post-log
 </details>
 
 ## Plugin Setup
+
+Install the plugin with composer
+```
+composer require mpipks/imap_apppasswd
+```
