@@ -1,4 +1,4 @@
-<roundcube:include file="includes/layout.html" xmlns:roundcube="http://www.w3.org/1999/html"/>
+<roundcube:include file="includes/layout.html" />
 <roundcube:include file="includes/menu.html" />
 <roundcube:include file="includes/settings-menu.html" condition="env:task == 'settings'" />
 
@@ -15,9 +15,7 @@
         <span></span>
     </div>
     <div class="content">
-<!--        <div class="apppw_info table-responsive-sm" style="overflow-x: scroll !important;">-->
             <roundcube:object name="plugin.imap_apppasswd.history" />
-<!--        </div>-->
         <div class="apppw-footer" role="doc-credits">
             Information on this page may include GeoLite2 Data created by MaxMind, available from https://www.maxmind.com.
         </div>
