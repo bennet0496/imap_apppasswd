@@ -1,23 +1,25 @@
 <?php
-// Copyright (c) 2024 Bennet Becker <dev@bennet.cc>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+/*
+ * Copyright (c) 2024. Bennet Becker <dev@bennet.cc>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
 
 //namespace bennetcc;
 //
@@ -384,11 +386,11 @@ class imap_apppasswd extends \rcube_plugin
             //get page number and clamp to 0 < $page < INT_MAX
             $page = intval(filter_input(INPUT_GET, "_page", FILTER_SANITIZE_NUMBER_INT) ?? 1);
             $page = max(1, $page);
+            $page_size = intval($this->rc->config->get(__("history_page_size"), 20)) ?? 20;
             //password ownership is checked in show_history()
             $s = $this->db->prepare("SELECT * FROM log, (SELECT count(*) as total FROM log WHERE pwid = :id) c WHERE pwid = :id ORDER BY timestamp DESC LIMIT 20 OFFSET :offset;");
             $s->bindParam(":id", $id, \PDO::PARAM_INT);
-            //page size is hardcoded to 20
-            $offset = ($page - 1) * 20;
+            $offset = ($page - 1) * $page_size;
             $s->bindParam(":offset", $offset, \PDO::PARAM_INT);
             $s->execute();
 
@@ -425,7 +427,7 @@ class imap_apppasswd extends \rcube_plugin
                 $total = $row['total']; //hack from above
             }
 
-            $maxpages = ceil($total / 20.0);
+            $maxpages = ceil(floatval($total) / floatval($page_size));
 
             //values for rendering the paginator
             $this->rc->output->set_env("pwid", $id);
@@ -592,7 +594,7 @@ class imap_apppasswd extends \rcube_plugin
             $page = max(1, $page);
         }
 
-        $page_size = 20;
+        $page_size = intval($this->rc->config->get(__("history_page_size"), 20)) ?? 20;
         $start_msg = ($page - 1) * $page_size + 1;
         $max = $count;
 

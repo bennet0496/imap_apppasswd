@@ -59,3 +59,7 @@ $config['imap_apppasswd_advertised_client_imap_protocol'] = "SSL/TLS";
 $config['imap_apppasswd_advertised_client_smtp_protocol'] = "STARTTLS";
 $config['imap_apppasswd_advertised_client_imap_password_method'] = "Normal password";
 $config['imap_apppasswd_advertised_client_smtp_password_method'] = "Normal password";
+
+// Additional settings
+$config['imap_apppasswd_log_level'] = 0;
+$config['imap_apppasswd_history_page_size'] = 20;

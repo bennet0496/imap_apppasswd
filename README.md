@@ -27,28 +27,27 @@ However, this plugin also requires you Dovecot (and SMTP Server [eg. Exim, Postf
 to be set up a certain way. 
 
 ## Prepare the database
-For the database, you can use any host you'd like to hold the data. This host
-will need to have mariadb (or mysql) installed
+For the database, you can use any host you'd like to hold the data. This doesn't necessarily need 
+to be the same host, Roundcube or Dovecot are running on; however, both will need database access.
+This host will need to have mariadb (or mysql) installed
 ```bash
 apt install mariadb-server
 ```
 
 Then create the database, users e.g. with
-```bash
-mysql <<EOF
+```sql
 CREATE DATABASE mail_auth;
 GRANT USAGE ON *.* TO `mailserver`@`localhost` IDENTIFIED BY 'password123';
 GRANT USAGE ON *.* TO `roundcube`@`webmail.example.com` IDENTIFIED BY 'password123';
 
-GRANT SELECT ON `mail_auth`.`log` TO `roundcube`@`webmail.example.com`
-GRANT SELECT, SHOW VIEW ON `mail_auth`.`app_passwords_with_log` TO `roundcube`@`webmail.example.com`
-GRANT SELECT, INSERT, UPDATE (`comment`), DELETE ON `mail_auth`.`app_passwords` TO `roundcube`@`webmail.example.com`
+GRANT SELECT ON `mail_auth`.`log` TO `roundcube`@`webmail.example.com`;
+GRANT SELECT, SHOW VIEW ON `mail_auth`.`app_passwords_with_log` TO `roundcube`@`webmail.example.com`;
+GRANT SELECT, INSERT, UPDATE (`comment`), DELETE ON `mail_auth`.`app_passwords` TO `roundcube`@`webmail.example.com`;
 
-GRANT SELECT ON `mail_auth`.`app_passwords` TO `mailserver`@`localhost`
-GRANT SELECT, INSERT ON `mail_auth`.`log` TO `mailserver`@`localhost`
-EOF
+GRANT SELECT ON `mail_auth`.`app_passwords` TO `mailserver`@`localhost`;
+GRANT SELECT, INSERT ON `mail_auth`.`log` TO `mailserver`@`localhost`;
 ```
-And the tables from the DDL in `SQL/mysql.sql`. Replace the passwords and host specifiers
+And the tables from the DDL in `database/DDL.sql`. Replace the passwords and host specifiers
 appropriately.
 
 ## Setup the mail server
@@ -185,3 +184,11 @@ Install the plugin with composer
 ```
 composer require mpipks/imap_apppasswd
 ```
+
+and configure it using `config.inc.php`.
+
+The most important option is correctly setting up the database connection, by setting 
+the DSN and credentials. You also need to set up how the username is derived. Here it is
+important to set it up the same way Dovecot will actually match the username after canonicalization.
+Meaning that even if you allow Login with the email as username Dovecot, if in the background it just
+matches against the local part, you need to set matching against the local part here.
