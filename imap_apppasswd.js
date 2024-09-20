@@ -140,6 +140,7 @@ rcmail.addEventListener("plugin.imap_apppasswd.renamed", function(data) {
 rcmail.addEventListener("init", function (ev) {
     // console.log(rcmail, window.rcmail)
     rcmail.register_command("plugin.imap_apppasswd.add", imap_apppasswd_add, true)
+    rcmail.register_command("plugin.imap_apppasswd.remove", imap_apppasswd_remove, true)
     rcmail.register_command("plugin.imap_apppasswd.remove_all", imap_apppasswd_delete_all, true)
 
     if (rcmail.task === "settings" &&  rcmail.env.action === "plugin.imap_apppasswd.history") {

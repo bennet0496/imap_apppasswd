@@ -333,7 +333,7 @@ class imap_apppasswd extends \rcube_plugin
         $s->bindValue("uid", $this->resolve_username());
 
         if ($s->execute()) {
-            $this->rc->output->command("plugin.apppw_remove_from_list", ["id" => $id]);
+            $this->rc->output->command("plugin.imap_apppasswd.remove_from_list", ["id" => $id]);
             $this->rc->output->show_message($this->gettext("apppw_deleted_success"));
         } else {
             $this->rc->output->show_message($this->gettext("apppw_deleted_error"), "error");
@@ -478,7 +478,7 @@ class imap_apppasswd extends \rcube_plugin
                 \html::span(['class' => 'apppw_location'], (empty($row['last_used_src_loc']) ? $this->gettext('unknown_location') : $row['last_used_src_loc'])) .
                 \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created') . " " . $this->format_diff($now->diff($created))) .
                 \html::a(['class' => 'apppw_delete', 'href' => $this->rc->url(["_action" => "plugin.imap_apppasswd.history", "_pwid" => $row['id']])], $this->gettext("show_full_history")) .
-                \html::a(['class' => 'apppw_delete', 'onclick' => 'apppw_remove(' . $row['id'] . ')'], $this->gettext("delete"))
+                \html::a(['class' => 'apppw_delete', 'onclick' => 'return rcmail.command("plugin.imap_apppasswd.remove",' . $row['id'] . ',this,event)'], $this->gettext("delete"))
             );
         }
 
