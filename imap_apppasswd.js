@@ -79,18 +79,22 @@ rcmail.addEventListener("plugin.imap_apppasswd.remove_from_list", function (data
 
 rcmail.addEventListener("plugin.imap_apppasswd.add", function (data) {
     const node = document.querySelector("#new_entry_template").content.cloneNode(true);
-    node.querySelector("input.apppw_password").value = data.passwd;
+    const inputBox = node.querySelector("input.apppw_password");
+    inputBox.value = data.passwd;
+    inputBox.style.width = inputBox.value.length * 7 + "pt";
 
     node.querySelector(".apppw_entry").dataset.apppwId = data.id;
     node.querySelector(".apppw_content_action.toggle_vis").onclick = function (event) {
         const box = document.querySelector("[data-apppw-id='"+data.id+"'] > * > input.apppw_password");
         const target = event.target.nodeName === 'svg' ? event.target.parentNode : event.target;
 
-        if(box.type === "password") { //show
-            box.type = "text";
+        if(box.classList.contains("disc")/*.type === "password"*/) { //show
+            // box.type = "text";
+            box.classList.remove("disc");
             target.innerHTML = document.querySelector("#symbol_hide").content.firstElementChild.outerHTML;
-        } else if (box.type === "text") {
-            box.type = "password";
+        } else /*if (box.type === "text")*/ {
+            // box.type = "password";
+            box.classList.add("disc");
             target.innerHTML = document.querySelector("#symbol_show").content.firstElementChild.outerHTML;
         }
     };

@@ -114,6 +114,7 @@
 
 .apppw_password {
     font-family: monospace;
+    /*width: calc(100% - 5em);*/
 }
 
 .apppw_title_edit:hover {
@@ -131,6 +132,13 @@
 .apppw_content input {
     background: none;
     border: none;
+    height: 100%;
+    /*chrome only*/
+    field-sizing: content;
+}
+
+.apppw_content input.disc {
+    -webkit-text-security: disc;
 }
 
 .apppw_content {
@@ -141,6 +149,7 @@
     padding: .4em 1em;
     font-stretch: 130%;
     color: white;
+    /*min-width: 80%;*/
     width: fit-content;
     margin: 0.3rem 0;
 }
@@ -150,6 +159,7 @@
     aspect-ratio: 1;
     display: inline-block;
     padding: .2em;
+    /*float: right;*/
 }
 
 .apppw_content_action:hover {
