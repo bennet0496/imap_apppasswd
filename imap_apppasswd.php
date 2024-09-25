@@ -326,8 +326,12 @@ class imap_apppasswd extends \rcube_plugin
         $this->log->debug($_REQUEST);
         $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
 
-        // We need uid here to protect from users delete each others passwords
-        $s = $this->db->prepare("DELETE FROM app_passwords WHERE id = :id AND uid = :uid;");
+        if ($this->rc->config->get(__("delete_mode"), "soft") == "hard") {
+            // We need uid here to protect from users delete each others passwords
+            $s = $this->db->prepare("DELETE FROM app_passwords WHERE id = :id AND uid = :uid;");
+        } else {
+            $s = $this->db->prepare("UPDATE app_passwords SET deleted = UTC_TIMESTAMP(3) WHERE id = :id AND uid = :uid;");
+        }
 
         $s->bindValue("id", $id, \PDO::PARAM_INT);
         $s->bindValue("uid", $this->resolve_username());
@@ -352,8 +356,12 @@ class imap_apppasswd extends \rcube_plugin
     {
         $this->log->debug($_REQUEST);
 
-        // We need uid here to protect from users delete each others passwords
-        $s = $this->db->prepare("DELETE FROM app_passwords WHERE uid = :uid;");
+        if ($this->rc->config->get(__("delete_mode"), "soft") == "hard") {
+            // We need uid here to protect from users delete each others passwords
+            $s = $this->db->prepare("DELETE FROM app_passwords WHERE uid = :uid;");
+        } else {
+            $s = $this->db->prepare("UPDATE app_passwords SET deleted = UTC_TIMESTAMP(3) WHERE uid = :uid;");
+        }
 
         $s->bindValue("uid", $this->resolve_username());
 
@@ -446,7 +454,7 @@ class imap_apppasswd extends \rcube_plugin
     public function object_handler_apppw_list(): string
     {
         //get app password for user
-        $s = $this->db->prepare("SELECT * FROM app_passwords_with_log WHERE uid = :uid;");
+        $s = $this->db->prepare("SELECT * FROM app_passwords_with_log WHERE uid = :uid AND deleted IS NULL;");
         $user_name = $this->resolve_username();
 
         $s->bindValue("uid", $user_name);

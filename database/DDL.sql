@@ -28,6 +28,7 @@ create table app_passwords
     password varchar(256)                         not null,
     created  datetime default utc_timestamp() not null,
     comment  text                                 null,
+    deleted  datetime                             null,
     constraint app_passwords_pk
         unique (uid, password)
 );
@@ -62,12 +63,14 @@ select distinct `pws`.`id`       AS `id`,
                 `l`.`src_ip`     AS `last_used_src_ip`,
                 `l`.`src_rdns`   AS `last_used_src_rdns`,
                 `l`.`src_loc`    AS `last_used_src_loc`,
-                `l`.`src_isp`    AS `last_used_src_isp`
+                `l`.`src_isp`    AS `last_used_src_isp`,
+                `pws`.`deleted`  AS `deleted`
 from ((select `app_passwords`.`id`       AS `id`,
               `app_passwords`.`uid`      AS `uid`,
               `app_passwords`.`password` AS `password`,
               `app_passwords`.`created`  AS `created`,
-              `app_passwords`.`comment`  AS `comment`
+              `app_passwords`.`comment`  AS `comment`,
+              `app_passwords`.`deleted`  AS `deleted`
        from `app_passwords`) `pws` left join (with s1 as (select `log`.`id`                                                                      AS `id`,
                                                                  `log`.`pwid`                                                                    AS `pwid`,
                                                                  `log`.`src_ip`                                                                  AS `src_ip`,
