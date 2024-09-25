@@ -141,7 +141,8 @@ rcmail.addEventListener("plugin.imap_apppasswd.renamed", function(data) {
     btn.onclick = () => imap_apppasswd_rename(data.id);
 });
 
-rcmail.addEventListener("init", function (ev) {
+// noinspection JSUnusedLocalSymbols
+rcmail.addEventListener("init", function (event) {
     // console.log(rcmail, window.rcmail)
     rcmail.register_command("plugin.imap_apppasswd.add", imap_apppasswd_add, true)
     rcmail.register_command("plugin.imap_apppasswd.remove", imap_apppasswd_remove, true)
@@ -170,6 +171,7 @@ rcmail.addEventListener("init", function (ev) {
     }
 })
 
+// noinspection JSUnusedLocalSymbols
 window.addEventListener("load",function (event) {
     // console.log("load", event);
     document.querySelectorAll("span.apppw_lastused, span.apppw_created").forEach((value) => {
