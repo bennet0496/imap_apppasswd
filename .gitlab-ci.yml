@@ -23,3 +23,13 @@ publish:
         echo "Could not create package - Code $code - $body";
         exit 1;
       fi
+release:
+  image: gitlab/glab
+  stage: deploy
+  script:
+    - git log --oneline --pretty=format:"%h %s" $(git describe --tags --abbrev=0 @^)..@ > changelog.txt
+    - glab release create $CI_COMMIT_TAG -F changelog.txt
+  only:
+    - tags  # please mention the "s" compared to Sergio Tomasello's solution
+  except:
+    - branches
