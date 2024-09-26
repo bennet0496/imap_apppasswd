@@ -24,7 +24,9 @@ publish:
         exit 1;
       fi
 release:
-  image: ubuntu:latest
+  image: 
+    name: gitlab/glab
+    entrypoint: [""]
   stage: deploy
   variables:
     URL: "$CI_SERVER_PROTOCOL://$CI_SERVER_HOST:$CI_SERVER_PORT/api/v4/projects/$CI_PROJECT_ID/releases?job_token=$CI_JOB_TOKEN"
