@@ -24,7 +24,9 @@ publish:
         exit 1;
       fi
 release:
-  image: gitlab/glab
+  image: 
+    name: gitlab/glab
+    entrypoint: ["/bin/bash"]
   stage: deploy
   script:
     - git log --oneline --pretty=format:"%h %s" $(git describe --tags --abbrev=0 @^)..@ > changelog.txt
