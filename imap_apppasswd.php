@@ -227,7 +227,8 @@ class imap_apppasswd extends \rcube_plugin
             //$i = $i % (26 + 26 + 10);
             //map value for even probability. mod would be easier, but may skews the probability if
             //256 mod |alphabet| != 0
-            $i = intval(round($i / ((2.0 ** 8.0) / floatval(26 + 26 + 10))));
+            $e = 26 + 26 + 10;
+            $i = intval(round($i / ((2.0 ** 8.0) / floatval($e)))) % $e;
 
             $this->log->trace(sprintf('password mapper: ord($c)=%d, floatval(26 + 26 + 10)=%f, ((2.0 ** 8.0) / floatval(26 + 26 + 10))=%f, mapped_raw=%f, mapped=%d',
                 ord($c), floatval(26 + 26 + 10), ((2.0 ** 8.0) / floatval(26 + 26 + 10)), ord($c) / ((2.0 ** 8.0) / floatval(26 + 26 + 10)), $i));
@@ -249,13 +250,14 @@ class imap_apppasswd extends \rcube_plugin
             //$i = $i % (26 + 26 + 10 + 2);
             //map value for even probability. mod would be easier, but may skews the probability if
             //256 mod |alphabet| != 0
-            $i = intval(round($i / ((2.0 ** 8.0) / floatval(26 + 26 + 10 + 2))));
+            $e = 26 + 26 + 10 + 2;
+            $i = intval(round($i / (((2.0 ** 8.0) - 1) / floatval($e)))) % $e;
 
-            if ($i < 12) { // ./0123456789 (ASCII 46-57)
+            if ($i < 12) { // ./0123456789 (ASCII 46-57) (Rand 0-45 => i 0-11)
                 return chr($i + ord('.'));
-            } else if ($i < 38) { // A-Z (ASCII 65-90)
+            } else if ($i < 38) { // A-Z (ASCII 65-90) (Rand 46-149 => i 12-37)
                 return chr($i - 12 + ord('A'));
-            } else { // a-z (ASCII 97-122)
+            } else { // a-z (ASCII 97-122) (Rand 150-255 => i 38-64)
                 return chr($i - 12 - 26 + ord('a'));
             }
         }, str_split($salt)));
