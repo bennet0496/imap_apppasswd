@@ -45,7 +45,7 @@ try:
     # ip_int & (0xffffffff << (32-local_networks[i][1]))
     idx = [ip_int & (0xffffffff << (32-local_networks[i][1])) == struct.unpack("!L", socket.inet_aton(local_networks[i][0]))[0] for i in local_networks].index(True)
 
-    print("MPI PKS " + list(local_networks.items())[idx][0])
+    print(list(local_networks.items())[idx][0])
     print("local network")
 except ValueError:
     with geoip2.database.Reader(geoip + 'GeoLite2-City.mmdb') as city_reader, geoip2.database.Reader( geoip + 'GeoLite2-ASN.mmdb') as asn_reader:

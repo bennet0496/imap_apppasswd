@@ -161,7 +161,7 @@ to gather Geographic information. You will need to have MaxMind GeoLite setup fo
 In this script you can also configure names for local networks
 ```python
 local_networks = {
-    "Network 1":                 ["192.0.2.0", 24],
+    "Network 1":                 ["172.17.1.0", 24],
     "Network 2":                 ["10.8.0.0", 16],
     "Network 3":                 ["192.168.0.0", 24],
 }
