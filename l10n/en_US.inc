@@ -81,3 +81,5 @@ $labels["src_isp"] = "Access Service Provider";
 $labels["history_for"] = 'Access history for $password';
 $labels["no_history"] = "No history";
 $labels["history_from_to_of"] = 'Log entries from $from to $to of $count';
+
+$labels["account_excluded"] = "Your account is excluded or exempt from using app passwords";

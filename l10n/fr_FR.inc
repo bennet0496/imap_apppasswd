@@ -80,3 +80,5 @@ $labels["src_isp"] = "Fournisseur d'accès";
 $labels["history_for"] = 'Historique des accès pour $password';
 $labels["no_history"] = "Pas d'entrées dans l'historique";
 $labels["history_from_to_of"] = 'Entrées de logs $from à $to de $count';
+
+$labels["account_excluded"] = "Votre compte est exclu ou exempté de l'utilisation des mots de passe d'application";

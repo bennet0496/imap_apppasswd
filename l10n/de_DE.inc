@@ -80,3 +80,5 @@ $labels["src_isp"] = "Zugriffsanschlussinhaber";
 $labels["history_for"] = 'Zugriffshistorie für $password';
 $labels["no_history"] = "Keine Zugriffe";
 $labels["history_from_to_of"] = 'Logeinträge $from bis $to von $count';
+
+$labels["account_excluded"] = "Dein Account ist von der Nutzung von Anwendungsspezifische Kennwörter ausgeschlossen oder befreit";

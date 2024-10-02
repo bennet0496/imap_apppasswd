@@ -109,8 +109,12 @@ class imap_apppasswd extends \rcube_plugin
         $this->include_stylesheet("imap_apppasswd.css");
         $this->include_script("imap_apppasswd.js");
 
-        //send the main settings template
-        $this->rc->output->send('imap_apppasswd.apppasswords');
+        if ($this->is_disabled()) {
+            $this->rc->output->send('imap_apppasswd.disabled');
+        } else {
+            //send the main settings template
+            $this->rc->output->send('imap_apppasswd.apppasswords');
+        }
     }
 
     /**
@@ -622,5 +626,98 @@ class imap_apppasswd extends \rcube_plugin
         }
 
         return rcube::Q($out);
+    }
+
+    private function is_disabled(): bool
+    {
+        $ex = $this->rc->config->get(__("exclude_users"), []);
+        $exg = $this->rc->config->get(__("exclude_users_in_addr_books"), []);
+        $exa = $this->rc->config->get(__("exclude_users_with_addr_book_value"), []);
+        /** @noinspection SpellCheckingInspection */
+        $exag = $this->rc->config->get(__("exclude_users_in_addr_book_group"), []);
+
+        $this->log->trace($ex,$exg, $exa, $exag);
+
+        // exclude directly deny listed users
+        if (is_array($ex) && (in_array($this->rc->get_user_name(), $ex) || in_array($this->resolve_username(), $ex) || in_array($this->rc->get_user_email(), $ex))) {
+            $this->log->info("access for " . $this->resolve_username() . " disabled via direct deny list");
+            return true;
+        }
+
+        // exclude directly deny listed address books
+        if (is_array($exg) && count($exg) > 0) {
+            foreach ($exg as $book) {
+                /** @noinspection SpellCheckingInspection */
+                $abook = $this->rc->get_address_book($book);
+                if ($abook) {
+                    if (array_key_exists("uid", $book->coltypes)) {
+                        $entries = $book->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
+                    } else {
+                        $entries = $book->search("email", $this->rc->get_user_email());
+                    }
+                    if ($entries) {
+                        $this->log->info("access for " . $this->resolve_username() .
+                            " disabled in " . $book->get_name() . " because they exist in there");
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // exclude users with a certain attribute in an address book
+        if (is_array($exa) && count($exa) > 0) {
+            // value not properly formatted
+            if (!is_array($exa[0])) {
+                $exa = [$exa];
+            }
+            foreach ($exa as $val) {
+                if (count($val) == 3) {
+                    $book = $this->rc->get_address_book($val[0]);
+                    $attr = $val[1];
+                    $match = $val[2];
+
+                    if (array_key_exists("uid", $book->coltypes)) {
+                        $entries = $book->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
+                    } else {
+                        $entries = $book->search("email", $this->rc->get_user_email());
+                    }
+
+                    if ($entries) {
+                        while ($e = $entries->iterate()) {
+                            if (array_key_exists($attr, $e) && ($e[$attr] == $match ||
+                                    (is_array($e[$attr]) && in_array($match, $e[$attr])))) {
+                                $this->log->info("access for " . $this->resolve_username() .
+                                    " disabled in " . $book->get_name() . " because of " . $attr . "=" . $match);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // exclude users in groups
+        if (is_array($exag) && count($exag) > 0) {
+            if (!is_array($exag[0])) {
+                /** @noinspection SpellCheckingInspection */
+                $exag = [$exag];
+            }
+            foreach ($exag as $val) {
+                if (count($val) == 2) {
+                    $book = $this->rc->get_address_book($val[0]);
+                    $group = $val[1];
+
+                    $groups = $book->get_record_groups(base64_encode($this->resolve_username()));
+
+                    if (in_array($group, $groups)) {
+                        $this->log->info("access for " . $this->resolve_username() .
+                            " disabled in " . $book->get_name() . " because of group membership " . $group);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
