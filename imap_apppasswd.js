@@ -26,7 +26,7 @@ function imap_apppasswd_remove(id) {
         rcmail.http_post("plugin.imap_apppasswd.remove", {'id': id});
     }
     const name = document.querySelector('[data-apppw-id="' + id +'"] > * > .apppw_title_text').textContent
-    rcmail.confirm_dialog(rcmail.gettext("confirm_delete_single", "imap_apppasswd").replace("%password%", name), "delete", apppw_remove_i, {
+    rcmail.confirm_dialog(rcmail.gettext("confirm_delete_single", "imap_apppasswd").replace("$password", name), "delete", apppw_remove_i, {
         button_class: "delete"
     });
 }
