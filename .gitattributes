@@ -4,3 +4,4 @@ dovecot export-ignore
 .gitignore export-ignore
 .gitlab-ci.yml export-ignore
 README.md export-ignore
+database export-ignore
