@@ -47,14 +47,14 @@ trait DisableUser {
                 /** @noinspection SpellCheckingInspection */
                 $abook = $this->rc->get_address_book($book);
                 if ($abook) {
-                    if (array_key_exists("uid", $book->coltypes)) {
-                        $entries = $book->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
+                    if (array_key_exists("uid", $abook->coltypes)) {
+                        $entries = $abook->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
                     } else {
-                        $entries = $book->search("email", $this->rc->get_user_email());
+                        $entries = $abook->search("email", $this->rc->get_user_email());
                     }
                     if ($entries) {
                         $this->log->info("access for " . $this->resolve_username() .
-                            " disabled in " . $book->get_name() . " because they exist in there");
+                            " disabled in " . $abook->get_name() . " because they exist in there");
                         return true;
                     }
                 }
@@ -65,16 +65,16 @@ trait DisableUser {
         if (is_array($exn) && count($exn) > 0) {
             foreach ($exn as $book) {
                 /** @noinspection SpellCheckingInspection */
-                $abook = $this->rc->get_address_book($book);
+                $abook = $this->rc->get_address_book($abook);
                 if ($abook) {
-                    if (array_key_exists("uid", $book->coltypes)) {
-                        $entries = $book->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
+                    if (array_key_exists("uid", $abook->coltypes)) {
+                        $entries = $abook->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
                     } else {
-                        $entries = $book->search("email", $this->rc->get_user_email());
+                        $entries = $abook->search("email", $this->rc->get_user_email());
                     }
                     if (!$entries) {
                         $this->log->info("access for " . $this->resolve_username() .
-                            " disabled in " . $book->get_name() . " because they do not exist in there");
+                            " disabled in " . $abook->get_name() . " because they do not exist in there");
                         return true;
                     }
                 }
