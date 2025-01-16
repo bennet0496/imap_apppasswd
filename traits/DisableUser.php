@@ -33,7 +33,7 @@ trait DisableUser {
         /** @noinspection SpellCheckingInspection */
         $exag = $this->rc->config->get(__("exclude_users_in_addr_book_group"), []);
 
-        $this->log->trace($ex,$exg, $exa, $exag);
+        $this->log->trace($ex,$exg,$exn,$exa,$exag);
 
         // exclude directly deny listed users
         if (is_array($ex) && (in_array($this->rc->get_user_name(), $ex) || in_array($this->resolve_username(), $ex) || in_array($this->rc->get_user_email(), $ex))) {
@@ -65,7 +65,7 @@ trait DisableUser {
         if (is_array($exn) && count($exn) > 0) {
             foreach ($exn as $book) {
                 /** @noinspection SpellCheckingInspection */
-                $abook = $this->rc->get_address_book($abook);
+                $abook = $this->rc->get_address_book($book);
                 if ($abook) {
                     if (array_key_exists("uid", $abook->coltypes)) {
                         $entries = $abook->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
