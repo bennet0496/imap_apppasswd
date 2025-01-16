@@ -72,7 +72,7 @@ trait DisableUser {
                     } else {
                         $entries = $abook->search("email", $this->rc->get_user_email());
                     }
-                    if (!$entries) {
+                    if (!$entries || $entries->count == 0) {
                         $this->log->info("access for " . $this->resolve_username() .
                             " disabled in " . $abook->get_name() . " because they do not exist in there");
                         return true;
