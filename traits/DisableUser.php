@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -28,6 +28,7 @@ trait DisableUser {
     {
         $ex = $this->rc->config->get(__("exclude_users"), []);
         $exg = $this->rc->config->get(__("exclude_users_in_addr_books"), []);
+        $exn = $this->rc->config->get(__("exclude_users_not_in_addr_books"), []);
         $exa = $this->rc->config->get(__("exclude_users_with_addr_book_value"), []);
         /** @noinspection SpellCheckingInspection */
         $exag = $this->rc->config->get(__("exclude_users_in_addr_book_group"), []);
@@ -54,6 +55,26 @@ trait DisableUser {
                     if ($entries) {
                         $this->log->info("access for " . $this->resolve_username() .
                             " disabled in " . $book->get_name() . " because they exist in there");
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // exclude not directly listed address books
+        if (is_array($exn) && count($exn) > 0) {
+            foreach ($exn as $book) {
+                /** @noinspection SpellCheckingInspection */
+                $abook = $this->rc->get_address_book($book);
+                if ($abook) {
+                    if (array_key_exists("uid", $book->coltypes)) {
+                        $entries = $book->search(["email", "uid"], [$this->rc->get_user_email(), $this->resolve_username()]);
+                    } else {
+                        $entries = $book->search("email", $this->rc->get_user_email());
+                    }
+                    if (!$entries) {
+                        $this->log->info("access for " . $this->resolve_username() .
+                            " disabled in " . $book->get_name() . " because they do not exist in there");
                         return true;
                     }
                 }
