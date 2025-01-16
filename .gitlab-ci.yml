@@ -24,11 +24,12 @@ publish:
         exit 1;
       fi
 release:
-  image: curlimages/curl:latest
+  image: ubuntu:latest
   stage: deploy
   variables:
     URL: "$CI_SERVER_PROTOCOL://$CI_SERVER_HOST:$CI_SERVER_PORT/api/v4/projects/$CI_PROJECT_ID/releases?job_token=$CI_JOB_TOKEN"
   script:
+    - apt update && apt install -y git curl
     - git log --oneline --pretty=format:"%h %s" $(git describe --tags --abbrev=0 @^)..@ > changelog.txt
     - insecure=$([ "$CI_SERVER_PROTOCOL" = "http" ] && echo "--insecure" || echo "")
     - response=$(curl -X POST -s -w "\n%{http_code}" $insecure --form "tag_name=$CI_COMMIT_TAG" --form "description=$(cat changelog.txt)" $URL)
