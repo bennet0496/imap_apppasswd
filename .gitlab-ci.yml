@@ -45,3 +45,4 @@ release:
     - tags  # please mention the "s" compared to Sergio Tomasello's solution
   except:
     - branches
+
