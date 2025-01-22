@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -46,6 +46,7 @@ $labels['apppw_deleted_success'] = 'App Password successfully deleted';
 $labels['apppw_deleted_error'] = 'Error deleting App Password, please try again later';
 $labels['apppw_add_error'] = 'Error adding password, please try again later';
 $labels['apppw_rename_error'] = 'Error renaming password, please try again later';
+$labels['apppw_rename_error_comment_is_password'] = 'You cannot use the password it self as password name';
 
 $labels['years_ago'] = '$count year(s) ago';
 $labels['months_ago'] = '$count month(s) ago';
@@ -55,9 +56,9 @@ $labels['minutes_ago'] = '$count minute(s) ago';
 $labels['just_now'] = 'just now';
 
 $labels['page_allows_password_creation_for_clients'] = <<<EOT
-This page allows to create App Passwords for your Mail clients. After creating a password, type or copy it into your 
+This page allows to generate App Passwords for your Mail clients. After creating a password, type or copy it into your 
 email application. The password will only be shown once. However, you are neither supposed nor required to remember 
-or take note of the password. If you want to add an additional client, just create a new password; you can create as 
+or take note of the password. If you want to add an additional client, just generate a new password; you can create as 
 many as you want.
 EOT;
 

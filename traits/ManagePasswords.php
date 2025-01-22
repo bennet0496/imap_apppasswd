@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -164,6 +164,20 @@ trait ManagePasswords {
         //stripe HTML tag to prevent XSS
         $name = strip_tags(filter_input(INPUT_POST, 'name'));
         $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
+
+        $s = $this->db->prepare("SELECT * FROM app_passwords WHERE id = :id AND uid = :uid;");
+        $s->bindValue("id", $id, \PDO::PARAM_INT);
+        $s->bindValue("uid", $this->resolve_username());
+        $s->execute();
+
+        $result = $s->fetch(\PDO::FETCH_ASSOC);
+        // User Pasted the password as password name
+        if (password_verify($name, substr($result['password'], strlen("{CRYPT}")))) {
+            $this->log->info($this->rc->user->get_username() . " pasted the password as name for " . $id);
+            $this->rc->output->show_message($this->gettext("apppw_rename_error_comment_is_password"), "error");
+            return;
+        }
+
         // We need uid here to protect from users renaming each others passwords
         $s = $this->db->prepare("UPDATE app_passwords SET comment = :comment WHERE id = :id AND uid = :uid;");
         $s->bindValue("comment", $name);
