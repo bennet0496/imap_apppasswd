@@ -286,7 +286,7 @@ trait ManagePasswords {
             $html .= \html::div(['class' => 'apppw_entry', 'data-apppw-id' => $row['id']],
                 \html::span(['class' => 'apppw_title'],
                     \html::span(['class' => 'apppw_title_text'], ($row['comment'] ?? $this->gettext('unnamed_app'))) .
-                    \html::a(['class' => 'apppw_title_edit', 'title' => $this->gettext('edit'), 'onclick' => 'apppw_edit(' . $row['id'] . ')'], IMAP_APPPW_EDIT_BTN)) .
+                    \html::a(['class' => 'apppw_title_edit', 'title' => $this->gettext('edit'), 'onclick' => 'imap_apppasswd_rename(' . $row['id'] . ')'], IMAP_APPPW_EDIT_BTN)) .
                 \html::span(['class' => 'apppw_lastused', 'title' => $row['last_used_timestamp'] == null ? $this->gettext('never_used') : $last_used->format(DATE_RFC822)],
                     $row['last_used_timestamp'] == null ?
                         $this->gettext('never_used') :
