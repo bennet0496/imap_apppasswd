@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -146,6 +146,7 @@ rcmail.addEventListener("init", function (event) {
     // console.log(rcmail, window.rcmail)
     rcmail.register_command("plugin.imap_apppasswd.add", imap_apppasswd_add, true)
     rcmail.register_command("plugin.imap_apppasswd.remove", imap_apppasswd_remove, true)
+    rcmail.register_command("plugin.imap_apppasswd.rename", imap_apppasswd_rename, true)
     rcmail.register_command("plugin.imap_apppasswd.remove_all", imap_apppasswd_delete_all, true)
 
     if (rcmail.task === "settings" &&  rcmail.env.action === "plugin.imap_apppasswd.history") {
