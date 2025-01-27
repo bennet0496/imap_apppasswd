@@ -171,11 +171,18 @@ trait ManagePasswords {
         $s->execute();
 
         $result = $s->fetch(\PDO::FETCH_ASSOC);
-        // User Pasted the password as password name
-        if (password_verify($name, substr($result['password'], strlen("{CRYPT}")))) {
-            $this->log->info($this->rc->user->get_username() . " pasted the password as name for " . $id);
-            $this->rc->output->show_message($this->gettext("apppw_rename_error_comment_is_password"), "error");
-            return;
+        $password_len = $this->rc->config->get(__('length'), 16);
+        $chunksize = $this->rc->config->get(__('chunksize'), 4);
+        $chunks = ceil($password_len / $chunksize);
+        for($offset = 0; $offset <= (strlen($name) - ($password_len + $chunks - 1)); $offset++) {
+            $check_part = substr($name, $offset, $password_len + $chunks - 1);
+            $this->log->trace($password_len, $chunks, $password_len + $chunks - 1, $offset, $check_part);
+            // User Pasted the password as part of password name
+            if (password_verify($check_part, substr($result['password'], strlen("{CRYPT}")))) {
+                $this->log->info($this->rc->user->get_username() . " pasted the password as name for " . $id);
+                $this->rc->output->show_message($this->gettext("apppw_rename_error_comment_is_password"), "error");
+                return;
+            }
         }
 
         // We need uid here to protect from users renaming each others passwords
