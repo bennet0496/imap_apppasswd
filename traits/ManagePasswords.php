@@ -59,6 +59,8 @@ trait ManagePasswords {
         $this->include_stylesheet("imap_apppasswd.css");
         $this->include_script("imap_apppasswd.js");
 
+        $this->rc->output->set_env(__("comment_length"), $this->rc->config->get(__('comment_length'), 64));
+
         if ($this->is_disabled()) {
             $this->rc->output->send('imap_apppasswd.disabled');
         } else {
@@ -164,6 +166,17 @@ trait ManagePasswords {
         //stripe HTML tag to prevent XSS
         $name = strip_tags(filter_input(INPUT_POST, 'name'));
         $id = filter_input(INPUT_POST, "id", FILTER_SANITIZE_NUMBER_INT);
+
+        if (strlen($name) > $this->rc->config->get(__('comment_length'), 64)) {
+            $this->log->info($this->rc->user->get_username() . " entered too long comment for " . $id);
+            $this->rc->output->show_message(
+                $this->gettext([
+                    "name" => "apppw_rename_error_too_long",
+                    "vars" => [
+                        "max" => $this->rc->config->get(__('comment_length'), 64)]
+                ]), "error");
+            return;
+        }
 
         $s = $this->db->prepare("SELECT * FROM app_passwords WHERE id = :id AND uid = :uid;");
         $s->bindValue("id", $id, \PDO::PARAM_INT);

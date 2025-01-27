@@ -55,6 +55,9 @@ function imap_apppasswd_rename(id) {
         if (e.key === 'Enter') {
             btn.click()
         }
+        if(box.value.length >= rcmail.env.imap_apppasswd_comment_length) {
+            return false;
+        }
     }
     elm.replaceWith(box);
     box.focus();
@@ -122,9 +125,12 @@ rcmail.addEventListener("plugin.imap_apppasswd.add", function (data) {
     }
 
     node.querySelector(".apppw_title_box").onkeydown = function (e) {
+        const value = document.querySelector("[data-apppw-id=\"" + data.id +"\"] > * > .apppw_title_box").value
         if (e.key === 'Enter') {
-            const value = document.querySelector("[data-apppw-id=\"" + data.id +"\"] > * > .apppw_title_box").value
             rcmail.http_post("plugin.imap_apppasswd.rename", {"id": data.id, "name": value});
+        }
+        if(value.length >= rcmail.env.imap_apppasswd_comment_length) {
+            return false;
         }
     }
     node.querySelector(".apppw_title_edit").onclick = function () {

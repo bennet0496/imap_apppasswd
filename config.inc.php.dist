@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -54,6 +54,9 @@ $config['imap_apppasswd_username'] = "%u";
 // "soft" => mark them as deleted, but keep them in database. This preserves logs
 // "hard" => Issue a DELETE command in SQL, deleting them and their depending log lines
 $config['imap_apppasswd_delete_mode'] = "soft";
+
+// Comment max length
+$config['imap_apppasswd_comment_length'] = 64;
 
 // Information to display to the user
 $config['imap_apppasswd_advertised_client_imap_host'] = "imap.example.com";

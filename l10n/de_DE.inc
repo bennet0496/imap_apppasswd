@@ -47,6 +47,7 @@ $labels['apppw_deleted_error'] = 'Fehler beim löschen des App-Passwortes, bitte
 $labels['apppw_add_error'] = 'Fehler beim hinzufügen eines App-Passwortes, bitte versuche es später erneut';
 $labels['apppw_rename_error'] = 'Fehler beim umbennenen des App-Passwortes, bitte versuche es später erneut';
 $labels['apppw_rename_error_comment_is_password'] = 'Das Passwort kann nicht als Passwort-Name genommen werden';
+$labels['apppw_rename_error_too_long'] = 'Der Passwort-Name is zu lang. Bitte benutze höchstens $max Zeichen!';
 
 $labels['years_ago'] = 'vor $count Jahr(en)';
 $labels['months_ago'] = 'vor $count Monat(en)';
