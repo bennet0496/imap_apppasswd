@@ -52,7 +52,7 @@ appropriately.
 
 ## Setup the mail server
 
-To set up the mail server, either setup Dovecot web auth from https://gitlab.pks.mpg.de/edv/dovecot-web-auth or
+To set up the mail server, either setup Dovecot web auth from https://github.com/bennet0496/dovecot_web_auth or
 use the old Postlogin script method below, that may or may not work anymore.
 
 
