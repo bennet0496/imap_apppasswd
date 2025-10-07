@@ -60,7 +60,8 @@ The table structure is described in the Repo for the Dovecot service
 
 To set up the mail server, either setup the purpose build 
 [Dovecot Web Auth](https://github.com/bennet0496/dovecot_web_auth) or
-otherwise set your mail server up to use the database. E.g. with a post-login Script.
+otherwise set your mail server up to use the database. E.g. with a 
+[sql authdb and post-login Script](https://github.com/bennet0496/dovecot-apppasswd).
 
 ## Plugin Setup
 
