@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2026. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -284,7 +284,7 @@ trait ManagePasswords {
     public function object_handler_apppw_list(): string
     {
         //get app password for user
-        $s = $this->db->prepare("SELECT * FROM app_passwords_with_log WHERE uid = :uid AND deleted IS NULL;");
+        $s = $this->db->prepare("SELECT * FROM app_passwords WHERE uid = :uid AND deleted IS NULL;");
         $user_name = $this->resolve_username();
 
         $s->bindValue("uid", $user_name);
@@ -297,7 +297,15 @@ trait ManagePasswords {
             $this->log->trace($row);
             $now = new \DateTimeImmutable("now", new \DateTimeZone("UTC"));
 
-            $last_used = new \DateTimeImmutable($row['last_used_timestamp'] ?? "01-01-1970 00:00:00.0000", new \DateTimeZone("UTC"));
+            $s_log = $this->db->prepare("SELECT * FROM log WHERE pwid = :pwid ORDER BY id DESC LIMIT 1;");
+            $s_log->bindValue("pwid", $row['id'], \PDO::PARAM_INT);
+            $s_log->execute();
+
+            $log_row = $s_log->fetch(\PDO::FETCH_ASSOC);
+
+            $this->log->trace($log_row);
+
+            $last_used = new \DateTimeImmutable($log_row['timestamp'] ?? "01-01-1970 00:00:00.0000", new \DateTimeZone("UTC"));
             $created = new \DateTimeImmutable($row['created'] ?? "01-01-1970 00:00:00.0000", new \DateTimeZone("UTC"));
 
             $this->log->trace($now, $last_used, $created);
@@ -307,13 +315,13 @@ trait ManagePasswords {
                 \html::span(['class' => 'apppw_title'],
                     \html::span(['class' => 'apppw_title_text'], ($row['comment'] ?? $this->gettext('unnamed_app'))) .
                     \html::a(['class' => 'apppw_title_edit', 'title' => $this->gettext('edit'), 'onclick' => 'return rcmail.command("plugin.imap_apppasswd.rename",' . $row['id'] . ',this,event)'], IMAP_APPPW_EDIT_BTN)) .
-                \html::span(['class' => 'apppw_lastused', 'title' => $row['last_used_timestamp'] == null ? $this->gettext('never_used') : $last_used->format(DATE_RFC822)],
-                    $row['last_used_timestamp'] == null ?
+                \html::span(['class' => 'apppw_lastused', 'title' => $log_row['timestamp'] == null ? $this->gettext('never_used') : $last_used->format(DATE_RFC822)],
+                    $log_row['timestamp'] == null ?
                         $this->gettext('never_used') :
                         $this->gettext('last_used') . " " . $this->format_diff($now->diff($last_used)) . " " . $this->gettext('last_used_from') . " " .
-                        \html::span(['title' => $row['src_ip'] ?? ""],
-                            (empty($row['last_used_src_rdns']) || $row['last_used_src_rdns'] == "<>" ? $row['last_used_src_ip'] : $row['last_used_src_rdns']) . (empty($row['last_used_src_isp']) ? "" : " (" . $row['last_used_src_isp'] . ")"))) .
-                \html::span(['class' => 'apppw_location'], (empty($row['last_used_src_loc']) ? $this->gettext('unknown_location') : $row['last_used_src_loc'])) .
+                        \html::span(['title' => $log_row['src_ip'] ?? ""],
+                            (empty($log_row['src_rdns']) || $log_row['src_rdns'] == "<>" ? $log_row['src_ip'] : $log_row['src_rdns']) . (empty($log_row['src_isp']) ? "" : " (" . $log_row['src_isp'] . ")"))) .
+                \html::span(['class' => 'apppw_location'], (empty($log_row['src_loc']) ? $this->gettext('unknown_location') : $row['src_loc'])) .
                 \html::span(['class' => 'apppw_created', 'title' => $created->format(DATE_RFC822)], $this->gettext('created') . " " . $this->format_diff($now->diff($created))) .
                 \html::a(['class' => 'apppw_delete', 'href' => $this->rc->url(["_action" => "plugin.imap_apppasswd.history", "_pwid" => $row['id']])], $this->gettext("show_full_history")) .
                 \html::a(['class' => 'apppw_delete', 'onclick' => 'return rcmail.command("plugin.imap_apppasswd.remove",' . $row['id'] . ',this,event)'], $this->gettext("delete"))
