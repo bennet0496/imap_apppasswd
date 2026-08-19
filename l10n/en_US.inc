@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2026. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -20,6 +20,8 @@
  * SOFTWARE.
  *
  */
+
+$labels['machinetranslated'] = '';
 
 $labels['imap_apppasswd'] = 'App Passwords';
 

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2024-2025. Bennet Becker <dev@bennet.cc>
+ * Copyright (c) 2024-2026. Bennet Becker <dev@bennet.cc>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -84,3 +84,5 @@ $labels['no_history'] = 'Keine Zugriffe';
 $labels['history_from_to_of'] = 'Logeinträge $from bis $to von $count';
 
 $labels['account_excluded'] = 'Dein Account ist von der Nutzung von App-Passwörtern ausgeschlossen oder befreit';
+
+$labels['machinetranslated'] = '';
